@@ -13,7 +13,7 @@ The core math is same for all implementations, including rendering and threading
 
 ## Usage:
 
-Compile main.cpp only and link with opengl and freeglut. Thats it.
+Compile main.cpp only and link with opengl, freeglut and glew.
 
 Code/Demo type can be changed from source only, just change the DEMO define below.
 To create a benchmarking csv, just set the BENCHMARK define to 1.
