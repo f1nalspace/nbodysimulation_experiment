@@ -16,8 +16,8 @@
 #error "Not supported demo!"
 #endif
 
-const int kWindowWidth = 640;
-const int kWindowHeight = 360;
+const int kWindowWidth = 1280;
+const int kWindowHeight = 720;
 const int kMaxFrameStatisticsCount = 1000;
 
 struct Window {
