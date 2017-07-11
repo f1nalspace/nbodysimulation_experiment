@@ -1,14 +1,9 @@
 /*
 -------------------------------------------------------------------------------------------------------------------
-Multi-Threaded N-Body 2D Smoothed Particle Hydrodynamics Fluid Simulation
-Based on paper "Particle-based Viscoelastic Fluid Simulation" by Simon Clavet, Philippe Beaudoin, and Pierre Poulin
+Multi-Threaded N-Body 2D Smoothed Particle Hydrodynamics Fluid Simulation based on paper "Particle-based Viscoelastic Fluid Simulation" by Simon Clavet, Philippe Beaudoin, and Pierre Poulin
 
 A experiment about creating a two-way particle simulation in 4 different programming styles to see the difference in performance and maintainability.
 The core math is same for all implementations, including rendering and threading.
-
-MIT License
-Copyright (c) 2017 Torsten Spaete
--------------------------------------------------------------------------------------------------------------------
 
 Demo 1-4
 
@@ -32,9 +27,12 @@ Todo:
 
 - Simple GUI using imgui
 - Migrate to modern opengl 3.3+
-- Introduce mass term in sph formulas, so we can use this for rigidbody interaction.
-- Rigidbody physics and two-way fluid interaction: Block and impulse
 
+License:
+
+MIT License
+Copyright (c) 2017 Torsten Spaete
+-------------------------------------------------------------------------------------------------------------------
 */
 #define DEMO 1
 #define BENCHMARK 0
