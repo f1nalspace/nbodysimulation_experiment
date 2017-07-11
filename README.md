@@ -4,7 +4,7 @@ Multi-Threaded N-Body 2D Smoothed Particle Hydrodynamics Fluid Simulation based 
 A experiment about creating a two-way particle simulation in 4 different programming styles to see the difference in performance and maintainability.
 The core math is same for all implementations, including rendering and threading.
 
-## Demo 1-4
+## Demos
 
 1. Object oriented style 1 (Naive)
 2. Object oriented style 2 (Public, reserved vectors, fixed grid, no unneccesary classes or pointers)
