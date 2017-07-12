@@ -150,12 +150,16 @@ void DemoApplication::PushDemoStatistics() {
 	demoStats.push_back(demoStat);
 }
 
+
+
 void DemoApplication::RenderBenchmark(OSDState *osdState, const float width, const float height) {
-	float areaScale = 0.95f;
+	std::string processorName = GetProcessorName();
+
+	float areaScale = 1.0f;
 	float areaWidth = width * areaScale;
-	float areaHeight = height * areaScale;
-	float areaLeft = (width - areaWidth) / 2.0f;
-	float areaBottom = (height - areaHeight) / 2.0f;
+	float areaHeight = height * areaScale - (osdState->fontHeight * 2.0f);
+	float areaLeft = 0;
+	float areaBottom = 0;
 	float fontHeight = 14.0f;
 
 	float sampleLabelFontHeight = (float)fontHeight;
@@ -309,6 +313,8 @@ void DemoApplication::RenderBenchmark(OSDState *osdState, const float width, con
 	char osdBuffer[256];
 	DemoStatistics *firstDemoStat = &demoStats[0];
 	sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Benchmark done, Scenario: %llu, Frames: %llu, Iterations: %llu", (firstDemoStat->scenarioIndex + 1), firstDemoStat->frameCount, firstDemoStat->iterationCount);
+	DrawOSDLine(osdState, osdBuffer);
+	sprintf_s(osdBuffer, ArrayCount(osdBuffer), "%s", processorName.c_str());
 	DrawOSDLine(osdState, osdBuffer);
 }
 
