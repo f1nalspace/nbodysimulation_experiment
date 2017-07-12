@@ -11,12 +11,16 @@ The core math is same for all implementations, including rendering and threading
 3. Object oriented style 3 (Structs only, no virtual function calls, reserved vectors, fixed grid)
 4. Data oriented style with 8/16 byte aligned structures
 
-## Usage:
+## How to compile:
 
 Compile main.cpp only and link with opengl, freeglut and glew.
 
-Code/Demo type can be changed from source only, just change the DEMO define below.
-To create a benchmarking csv, just set the BENCHMARK define to 1.
+## Benchmark:
+
+There is a benchmark recording and rendering built-in.
+
+To start a benchmark hit "B" key.
+To stop a benchmark hit "Escape" key.
 
 ## Notes:
 
@@ -24,7 +28,8 @@ To create a benchmarking csv, just set the BENCHMARK define to 1.
 
 ## Todo:
 
-* Simple GUI using imgui
+* Add tick labels and value labels on benchmark chart
+* Migrate all GUI/Text rendering to imGUI
 * Migrate to modern opengl 3.3+
 
 ## License:
