@@ -15,7 +15,9 @@
 const int kWindowWidth = 640;
 const int kWindowHeight = 360;
 
-#if 0
+#define VERY_SHORT_BENCHMARK 0
+
+#if !VERY_SHORT_BENCHMARK
 const size_t kBenchmarkFrameCount = 250;
 const size_t kBenchmarkIterationCount = 4;
 #else
@@ -88,6 +90,7 @@ struct DemoStatistics {
 	size_t demoIndex;
 	size_t scenarioIndex;
 	size_t frameCount;
+	size_t iterationCount;
 	FrameStatistics min;
 	FrameStatistics max;
 	FrameStatistics avg;

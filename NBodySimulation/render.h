@@ -2,12 +2,14 @@
 #define RENDER_H
 
 #include <GL/glew.h>
+#include <GL/freeglut.h>
 
 #include "vecmath.h"
 
 struct OSDState {
 	int charY;
 	int fontHeight;
+	void *font;
 };
 
 inline void FillRectangle(const Vec2f &p, const Vec2f &size, const Vec4f &color) {
@@ -58,37 +60,37 @@ inline void FillCircle(const Vec2f &p, const float radius, const Vec4f &color) {
 	glEnd();
 }
 
-inline int GetFontHeight() {
-	int result = glutBitmapHeight(GLUT_BITMAP_8_BY_13);
+inline int GetFontHeight(void *font) {
+	int result = glutBitmapHeight(font);
 	return(result);
 }
-inline int GetTextWidth(const char *text) {
+inline int GetTextWidth(const char *text, void *font) {
 	int result = 0;
 	for (int i = 0; i < strlen(text); ++i) {
-		result += glutBitmapWidth(GLUT_BITMAP_8_BY_13, text[i]);
+		result += glutBitmapWidth(font, text[i]);
 	}
 	return(result);
 }
 
-inline void RenderText(float x, float y, const char *text, float scale, const Vec4f &color) {
+inline void RenderText(float x, float y, const char *text, const Vec4f &color, void *font) {
 	glColor4fv(&color.m[0]);
-	glRasterPos2f(x, y);
+	glRasterPos2f(x, y + 2.0f);
 	glPushMatrix();
-	glScalef(scale, scale, 1.0f);
-	glutBitmapString(GLUT_BITMAP_8_BY_13, (const unsigned char *)text);
+	glutBitmapString(font, (const unsigned char *)text);
 	glPopMatrix();
 }
 
-inline OSDState CreateOSD() {
+inline OSDState CreateOSD(void *font) {
 	OSDState result = {};
 	result.charY = 0;
-	result.fontHeight = GetFontHeight();
+	result.fontHeight = GetFontHeight(font);
+	result.font = font;
 	return(result);
 }
 
 inline void DrawOSDLine(OSDState *osdState, const char *text) {
-	glRasterPos2i(0, osdState->charY);
-	glutBitmapString(GLUT_BITMAP_8_BY_13, (const unsigned char *)text);
+	glRasterPos2f(0.0f, (float)osdState->charY + 2.0f);
+	glutBitmapString(osdState->font, (const unsigned char *)text);
 	osdState->charY -= osdState->fontHeight;
 }
 

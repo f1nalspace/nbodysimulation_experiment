@@ -53,48 +53,12 @@ DemoApplication::DemoApplication() :
 	activeBenchmarkIteration = nullptr;
 	benchmarkIterations.reserve(kBenchmarkIterationCount);
 
-	StartBenchmark();
+	//StartBenchmark();
 }
 
 DemoApplication::~DemoApplication() {
 	delete demo;
 }
-
-#if 0
-void DemoApplication::SaveFrameStatistics() {
-	auto userProfile = std::experimental::filesystem::path(getenv("USERPROFILE"));
-	auto desktopFolder = userProfile /= "Desktop";
-	auto frameStatFile = desktopFolder /= "nbodysim_framestatistics.csv";
-	auto frameStatFilePath = frameStatFile.generic_string();
-	{
-		std::ofstream outFileStream(frameStatFilePath, std::ios::binary);
-		outFileStream << "Num"
-			<< ";" << "TotalFrametime"
-			<< ";" << "Integration"
-			<< ";" << "ViscosityForces"
-			<< ";" << "UpdateGrid"
-			<< ";" << "NeighborSearch"
-			<< ";" << "DensityAndPressure"
-			<< ";" << "DeltaPositions"
-			<< ";" << "Collisions"
-			<< std::endl;
-		for (size_t index = 0; index < frameStatistics.size(); ++index) {
-			FrameStatistics *frameStats = &frameStatistics[index];
-			outFileStream << index
-				<< ";" << frameStats->frameTime
-				<< ";" << frameStats->sphStats.time.integration
-				<< ";" << frameStats->sphStats.time.viscosityForces
-				<< ";" << frameStats->sphStats.time.updateGrid
-				<< ";" << frameStats->sphStats.time.neighborSearch
-				<< ";" << frameStats->sphStats.time.densityAndPressure
-				<< ";" << frameStats->sphStats.time.deltaPositions
-				<< ";" << frameStats->sphStats.time.collisions
-				<< std::endl;
-		}
-	}
-	printf("Saved: %s\n", frameStatFilePath.c_str());
-}
-#endif
 
 template <typename T>
 static void UpdateMin(T &value, T a) {
@@ -182,61 +146,32 @@ void DemoApplication::PushDemoStatistics() {
 	}
 
 	demoStat.frameCount = maxFrameCount;
+	demoStat.iterationCount = iterationCount;
 	demoStats.push_back(demoStat);
 }
 
 void DemoApplication::RenderBenchmark(OSDState *osdState, const float width, const float height) {
-	char osdBuffer[256];
-	DemoStatistics *firstDemoStat = &demoStats[0];
-	sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Benchmark done, Scenario: %llu, Frames: %llu", (firstDemoStat->scenarioIndex + 1), firstDemoStat->frameCount);
-	DrawOSDLine(osdState, osdBuffer);
-
-#if 0
-	for (size_t demoStatIndex = 0; demoStatIndex < demoStats.size(); ++demoStatIndex) {
-		DemoStatistics *demoStat = &demoStats[demoStatIndex];
-		sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Demo %llu", (demoStatIndex + 1));
-		DrawOSDLine(osdState, osdBuffer);
-		sprintf_s(osdBuffer, ArrayCount(osdBuffer), "\tFrametime min: %f, max: %f, avg: %f", demoStat->min.frameTime, demoStat->max.frameTime, demoStat->avg.frameTime);
-		DrawOSDLine(osdState, osdBuffer);
-		sprintf_s(osdBuffer, ArrayCount(osdBuffer), "\tIntegration min: %f, max: %f, avg: %f", demoStat->min.stats.time.integration, demoStat->max.stats.time.integration, demoStat->avg.stats.time.integration);
-		DrawOSDLine(osdState, osdBuffer);
-		sprintf_s(osdBuffer, ArrayCount(osdBuffer), "\tViscosity forces min: %f, max: %f, avg: %f", demoStat->min.stats.time.viscosityForces, demoStat->max.stats.time.viscosityForces, demoStat->avg.stats.time.viscosityForces);
-		DrawOSDLine(osdState, osdBuffer);
-		sprintf_s(osdBuffer, ArrayCount(osdBuffer), "\tPredict min: %f, max: %f, avg: %f", demoStat->min.stats.time.predict, demoStat->max.stats.time.predict, demoStat->avg.stats.time.predict);
-		DrawOSDLine(osdState, osdBuffer);
-		sprintf_s(osdBuffer, ArrayCount(osdBuffer), "\tUpdate grid min: %f, max: %f, avg: %f", demoStat->min.stats.time.updateGrid, demoStat->max.stats.time.updateGrid, demoStat->avg.stats.time.updateGrid);
-		DrawOSDLine(osdState, osdBuffer);
-		sprintf_s(osdBuffer, ArrayCount(osdBuffer), "\tNeighbor search: %f, max: %f, avg: %f", demoStat->min.stats.time.neighborSearch, demoStat->max.stats.time.neighborSearch, demoStat->avg.stats.time.neighborSearch);
-		DrawOSDLine(osdState, osdBuffer);
-		sprintf_s(osdBuffer, ArrayCount(osdBuffer), "\tDensity and pressure: %f, max: %f, avg: %f", demoStat->min.stats.time.densityAndPressure, demoStat->max.stats.time.densityAndPressure, demoStat->avg.stats.time.densityAndPressure);
-		DrawOSDLine(osdState, osdBuffer);
-		sprintf_s(osdBuffer, ArrayCount(osdBuffer), "\tDelta positions: %f, max: %f, avg: %f", demoStat->min.stats.time.deltaPositions, demoStat->max.stats.time.deltaPositions, demoStat->avg.stats.time.deltaPositions);
-		DrawOSDLine(osdState, osdBuffer);
-		sprintf_s(osdBuffer, ArrayCount(osdBuffer), "\tCollisions: %f, max: %f, avg: %f", demoStat->min.stats.time.collisions, demoStat->max.stats.time.collisions, demoStat->avg.stats.time.collisions);
-		DrawOSDLine(osdState, osdBuffer);
-	}
-#endif
-
 	float areaScale = 0.95f;
 	float areaWidth = width * areaScale;
 	float areaHeight = height * areaScale;
 	float areaLeft = (width - areaWidth) / 2.0f;
 	float areaBottom = (height - areaHeight) / 2.0f;
+	float fontHeight = 14.0f;
 
-	float sampleLabelTextScale = 0.9f;
+	float sampleLabelFontHeight = (float)fontHeight;
 	float sampleAxisMargin = 10.0f;
-	float sampleAxisHeight = ((float)osdState->fontHeight * sampleLabelTextScale) + (sampleAxisMargin * 2.0f);
+	float sampleAxisHeight = sampleLabelFontHeight + (sampleAxisMargin * 2.0f);
 
-	float legendLabelTextScale = 0.75f;
-	float legendLabelPadding = 20.0f;
-	float legendBulletPadding = 10.0f;
+	float legendLabelPadding = 5.0f;
+	float legendBulletPadding = 5.0f;
 	float legendMargin = 0.0f;
-	float legendHeight = ((float)osdState->fontHeight * legendLabelTextScale) + (legendMargin * 2.0f);
-	float legendBulletSize = (float)osdState->fontHeight * legendLabelTextScale * 0.75f;
+	float legendFontHeight = (float)fontHeight;
+	float legendBulletSize = (float)fontHeight * 0.75f;
+	float legendHeight = std::max(legendFontHeight, legendBulletSize) + (legendMargin * 2.0f);
 
 	float chartOriginX = areaLeft;
 	float chartOriginY = areaBottom + sampleAxisHeight + legendHeight;
-	float chartHeight = areaHeight - sampleAxisHeight - legendHeight;
+	float chartHeight = areaHeight - (sampleAxisHeight + legendHeight);
 	float chartWidth = areaWidth;
 
 	const int seriesCount = kDemoCount;
@@ -314,7 +249,7 @@ void DemoApplication::RenderBenchmark(OSDState *osdState, const float width, con
 	for (int sampleIndex = 1; sampleIndex < sampleCount; ++sampleIndex) {
 		glBegin(GL_LINES);
 		glVertex2f(areaLeft + (float)sampleIndex * sampleWidth, areaBottom + legendHeight);
-		glVertex2f(areaLeft + (float)sampleIndex * sampleWidth, areaBottom + legendHeight + areaHeight);
+		glVertex2f(areaLeft + (float)sampleIndex * sampleWidth, areaBottom + legendHeight + (areaHeight - legendHeight));
 		glEnd();
 	}
 	glLineWidth(1);
@@ -329,29 +264,6 @@ void DemoApplication::RenderBenchmark(OSDState *osdState, const float width, con
 	glVertex2f(chartOriginX, chartOriginY + chartHeight);
 	glEnd();
 	glLineWidth(1);
-
-	// Sample labels
-	for (int sampleIndex = 0; sampleIndex < sampleCount; ++sampleIndex) {
-		const char *sampleLabel = sampleLabels[sampleIndex].c_str();
-		float textWidth = (float)GetTextWidth(sampleLabel) * sampleLabelTextScale;
-		float xLeft = chartOriginX + (float)sampleIndex * sampleWidth + sampleWidth * 0.5f - textWidth * 0.5f;
-		float yMiddle = chartOriginY - sampleAxisHeight * 0.5f;
-		RenderText(xLeft, yMiddle, sampleLabel, sampleLabelTextScale, Vec4f(1, 1, 1, 1));
-	}
-
-	// Legend
-	float legendCurLeft = areaLeft;
-	float legendMiddle = areaBottom + legendHeight * 0.5f + legendMargin;
-	for (int legendLabelIndex = 0; legendLabelIndex < legendLabels.size(); ++legendLabelIndex) {
-		Vec4f legendColor = seriesColors[legendLabelIndex];
-		FillRectangle(Vec2f(legendCurLeft, legendMiddle), Vec2f(legendBulletSize, legendBulletSize), legendColor);
-		legendCurLeft += legendBulletSize + legendBulletPadding;
-
-		const char *legendLabel = legendLabels[legendLabelIndex].c_str();
-		float labelWidth = GetTextWidth(legendLabel) * legendLabelTextScale;
-		RenderText(legendCurLeft, legendMiddle, legendLabel, legendLabelTextScale, Vec4f(1, 1, 1, 1));
-		legendCurLeft += labelWidth + legendLabelPadding;
-	}
 
 	// Bars
 	float barWidth = sampleWidth - (sampleMargin * 2.0f);
@@ -368,6 +280,36 @@ void DemoApplication::RenderBenchmark(OSDState *osdState, const float width, con
 			FillRectangle(Vec2f(sampleLeft, sampleBottom), Vec2f(abs(sampleRight - sampleLeft), abs(sampleBottom - sampleTop)), seriesColor);
 		}
 	}
+
+	// Sample labels
+	for (int sampleIndex = 0; sampleIndex < sampleCount; ++sampleIndex) {
+		const char *sampleLabel = sampleLabels[sampleIndex].c_str();
+		float textWidth = (float)GetTextWidth(sampleLabel, osdState->font);
+		float xLeft = chartOriginX + (float)sampleIndex * sampleWidth + sampleWidth * 0.5f - textWidth * 0.5f;
+		float yMiddle = chartOriginY - sampleLabelFontHeight - sampleAxisMargin;
+		RenderText(xLeft, yMiddle, sampleLabel, Vec4f(1, 1, 1, 1), osdState->font);
+	}
+
+	// Legend
+	float legendCurLeft = areaLeft;
+	float legendBottom = areaBottom + legendMargin;
+	for (int legendLabelIndex = 0; legendLabelIndex < legendLabels.size(); ++legendLabelIndex) {
+		Vec4f legendColor = seriesColors[legendLabelIndex];
+		FillRectangle(Vec2f(legendCurLeft, legendBottom), Vec2f(legendBulletSize, legendBulletSize), legendColor);
+		legendCurLeft += legendBulletSize + legendBulletPadding;
+
+		const char *legendLabel = legendLabels[legendLabelIndex].c_str();
+		float labelWidth = (float)GetTextWidth(legendLabel, osdState->font);
+		float labelY = legendBottom - legendFontHeight * 0.5f + legendBulletSize * 0.5f;
+		RenderText(legendCurLeft, labelY, legendLabel, Vec4f(1, 1, 1, 1), osdState->font);
+		legendCurLeft += labelWidth + legendLabelPadding;
+	}
+
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	char osdBuffer[256];
+	DemoStatistics *firstDemoStat = &demoStats[0];
+	sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Benchmark done, Scenario: %llu, Frames: %llu, Iterations: %llu", (firstDemoStat->scenarioIndex + 1), firstDemoStat->frameCount, firstDemoStat->iterationCount);
+	DrawOSDLine(osdState, osdBuffer);
 }
 
 void DemoApplication::UpdateAndRender(const float frameTime, const uint64_t cycles) {
@@ -445,18 +387,17 @@ void DemoApplication::UpdateAndRender(const float frameTime, const uint64_t cycl
 
 	// OSD
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	OSDState osdState = CreateOSD();
+	OSDState osdState = CreateOSD(GLUT_BITMAP_8_BY_13);
 	osdState.charY = h - osdState.fontHeight;
 
-#if 0
-	RenderBenchmark(&osdState, (float)w, (float)h);
-#else
 	if (!benchmarkActive) {
 		if (benchmarkDone && (demoStats.size() > 0)) {
 			RenderBenchmark(&osdState, (float)w, (float)h);
 		} else {
 			size_t scenarioCount = ArrayCount(SPHScenarios);
 			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "%s - [%llu / %llu] %s (Space)", title.c_str(), (activeScenarioIndex + 1), scenarioCount, activeScenarioName.c_str());
+			DrawOSDLine(&osdState, osdBuffer);
+			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Start benchmark (B)");
 			DrawOSDLine(&osdState, osdBuffer);
 			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Simulation: %s (P)", (simulationActive ? "yes" : "no"));
 			DrawOSDLine(&osdState, osdBuffer);
@@ -505,8 +446,7 @@ void DemoApplication::UpdateAndRender(const float frameTime, const uint64_t cycl
 		assert(activeBenchmarkIteration != nullptr);
 		sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Frame %llu of %llu", activeBenchmarkIteration->frames.size() + 1, kBenchmarkFrameCount);
 		DrawOSDLine(&osdState, osdBuffer);
-}
-#endif
+	}
 }
 
 void DemoApplication::LoadDemo(const size_t demoIndex) {
