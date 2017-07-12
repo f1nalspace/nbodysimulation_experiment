@@ -31,6 +31,7 @@ Notes:
 
 Todo:
 
+- External particle forces
 - Add tick labels and value labels on benchmark chart
 - Migrate all GUI/Text rendering to imGUI
 - Migrate to modern opengl 3.3+
