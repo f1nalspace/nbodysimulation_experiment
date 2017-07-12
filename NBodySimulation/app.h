@@ -14,6 +14,7 @@
 
 const int kWindowWidth = 1280;
 const int kWindowHeight = 720;
+const char *kAppVersion = "1.0";
 
 #define VERY_SHORT_BENCHMARK 0
 
@@ -48,9 +49,8 @@ struct Window {
 
 struct Application {
 	Window  *window;
-	std::string title;
 
-	Application(const std::string &title);
+	Application();
 	virtual ~Application();
 
 	inline Window *GetWindow() {
@@ -97,6 +97,7 @@ struct DemoStatistics {
 };
 
 struct DemoApplication : public Application {
+	std::string demoTitle;
 	bool benchmarkActive;
 	bool benchmarkDone;
 	std::vector<BenchmarkIteration> benchmarkIterations;

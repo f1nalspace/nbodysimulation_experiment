@@ -1,6 +1,8 @@
 /*
 -------------------------------------------------------------------------------------------------------------------
-Multi-Threaded N-Body 2D Smoothed Particle Hydrodynamics Fluid Simulation based on paper "Particle-based Viscoelastic Fluid Simulation" by Simon Clavet, Philippe Beaudoin, and Pierre Poulin
+Multi-Threaded N-Body 2D Smoothed Particle Hydrodynamics Fluid Simulation based on paper "Particle-based Viscoelastic Fluid Simulation" by Simon Clavet, Philippe Beaudoin, and Pierre Poulin.
+
+Version 1.0
 
 A experiment about creating a two-way particle simulation in 4 different programming styles to see the difference in performance and maintainability.
 The core math is same for all implementations, including rendering and threading.
@@ -32,6 +34,14 @@ Todo:
 - Add tick labels and value labels on benchmark chart
 - Migrate all GUI/Text rendering to imGUI
 - Migrate to modern opengl 3.3+
+
+Version History:
+
+1.0:
+- Added integrated benchmark functionality
+
+0.9:
+- Initial version
 
 License:
 
@@ -90,7 +100,9 @@ int main(int argc, char **args) {
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowPosition(window->GetLeft(), window->GetTop());
 	glutInitWindowSize(window->GetWidth(), window->GetHeight());
-	glutCreateWindow("C++ NBody Simulation");
+
+	std::string windowTitle = std::string("C++ NBody Simulation V") + std::string(kAppVersion);
+	glutCreateWindow(windowTitle.c_str());
 
 	glewInit();
 

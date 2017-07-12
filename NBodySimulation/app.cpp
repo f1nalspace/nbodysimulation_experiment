@@ -23,9 +23,8 @@ Window::Window() :
 	height(kWindowHeight) {
 }
 
-Application::Application(const std::string &title) {
+Application::Application() {
 	window = new Window();
-	this->title = title;
 }
 
 Application::~Application() {
@@ -38,7 +37,7 @@ void Application::Resize(const int width, const int height) {
 }
 
 DemoApplication::DemoApplication() :
-	Application("NBody-Simulation") {
+	Application() {
 
 	demoStats.reserve(kDemoCount);
 
@@ -401,7 +400,9 @@ void DemoApplication::UpdateAndRender(const float frameTime, const uint64_t cycl
 			RenderBenchmark(&osdState, (float)w, (float)h);
 		} else {
 			size_t scenarioCount = ArrayCount(SPHScenarios);
-			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "%s - [%llu / %llu] %s (Space)", title.c_str(), (activeScenarioIndex + 1), scenarioCount, activeScenarioName.c_str());
+			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Scenario: [%llu / %llu] %s (Space)", (activeScenarioIndex + 1), scenarioCount, activeScenarioName.c_str());
+			DrawOSDLine(&osdState, osdBuffer);
+			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Demo: %s (D)", demoTitle.c_str());
 			DrawOSDLine(&osdState, osdBuffer);
 			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Start benchmark (B)");
 			DrawOSDLine(&osdState, osdBuffer);
@@ -469,22 +470,22 @@ void DemoApplication::LoadDemo(const size_t demoIndex) {
 		case 0:
 		{
 			demo = new Demo1::ParticleSimulation();
-			title = Demo1::kDemoName;
+			demoTitle = Demo1::kDemoName;
 		} break;
 		case 1:
 		{
 			demo = new Demo2::ParticleSimulation();
-			title = Demo2::kDemoName;
+			demoTitle = Demo2::kDemoName;
 		} break;
 		case 2:
 		{
 			demo = new Demo3::ParticleSimulation();
-			title = Demo3::kDemoName;
+			demoTitle = Demo3::kDemoName;
 		} break;
 		case 3:
 		{
 			demo = new Demo4::ParticleSimulation();
-			title = Demo4::kDemoName;
+			demoTitle = Demo4::kDemoName;
 		} break;
 		default:
 			assert(false);
@@ -528,6 +529,7 @@ void DemoApplication::KeyUp(unsigned char key) {
 				simulationActive = !simulationActive;
 			} else if (key == 'd') {
 				demoIndex = (demoIndex + 1) % 4;
+				simulationActive = true;
 				LoadDemo(demoIndex);
 			} else if (key == 'r') {
 				LoadScenario(activeScenarioIndex);
