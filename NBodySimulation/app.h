@@ -12,8 +12,8 @@
 #include "demo3.h"
 #include "demo4.h"
 
-const int kWindowWidth = 640;
-const int kWindowHeight = 360;
+const int kWindowWidth = 1280;
+const int kWindowHeight = 720;
 
 #define VERY_SHORT_BENCHMARK 0
 

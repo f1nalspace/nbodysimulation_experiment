@@ -80,6 +80,25 @@ inline void RenderText(float x, float y, const char *text, const Vec4f &color, v
 	glPopMatrix();
 }
 
+inline float GetStrokeTextWidth(const char *text, float size) {
+	float w = glutStrokeLengthf(GLUT_STROKE_ROMAN, (const unsigned char *)text);
+	float h = glutStrokeHeight(GLUT_STROKE_ROMAN);
+	float result = size * (w / h);
+	return(result);
+}
+
+inline void RenderStrokeText(float x, float y, const char *text, const Vec4f &color, float size, float lineWidth) {
+	float h = glutStrokeHeight(GLUT_STROKE_ROMAN);
+	glLineWidth(lineWidth);
+	glColor4fv(&color.m[0]);
+	glPushMatrix();
+	glTranslatef(x, y, 0.0f);
+	glScalef(size / h, size / h, 1.0f);
+	glutStrokeString(GLUT_STROKE_ROMAN, (const unsigned char *)text);
+	glPopMatrix();
+	glLineWidth(1.0f);
+}
+
 inline OSDState CreateOSD(void *font) {
 	OSDState result = {};
 	result.charY = 0;

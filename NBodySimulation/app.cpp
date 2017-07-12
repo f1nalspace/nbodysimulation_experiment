@@ -374,7 +374,7 @@ void DemoApplication::UpdateAndRender(const float frameTime, const uint64_t cycl
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	if (!benchmarkDone && !benchmarkActive) {
+	if (!benchmarkDone) {
 		demo->Render(worldToScreenScale);
 	}
 
@@ -439,13 +439,19 @@ void DemoApplication::UpdateAndRender(const float frameTime, const uint64_t cycl
 			DrawOSDLine(&osdState, osdBuffer);
 		}
 	} else {
-		sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Benchmarking - Demo %llu of %llu, Scenario: %llu (Escape)", demoIndex + 1, (size_t)4, (activeScenarioIndex + 1));
+		sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Benchmarking - Demo %llu of %llu, Scenario: %s (Escape)", demoIndex + 1, (size_t)4, activeScenarioName.c_str());
 		DrawOSDLine(&osdState, osdBuffer);
 		sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Iteration %llu of %llu", benchmarkIterations.size(), kBenchmarkIterationCount);
 		DrawOSDLine(&osdState, osdBuffer);
 		assert(activeBenchmarkIteration != nullptr);
 		sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Frame %llu of %llu", activeBenchmarkIteration->frames.size() + 1, kBenchmarkFrameCount);
 		DrawOSDLine(&osdState, osdBuffer);
+
+		const char *bigText = "Benchmarking";
+		float bigTextSize = 100.0f;
+		float bigTextX = w * 0.5f - GetStrokeTextWidth(bigText, bigTextSize) * 0.5f;
+		float bigTextY = h * 0.5f - bigTextSize * 0.5f;
+		RenderStrokeText(bigTextX, h * 0.5f, bigText, Vec4f(1, 1, 1, 1), bigTextSize, 4.0f);
 	}
 }
 
@@ -504,20 +510,26 @@ void DemoApplication::StopBenchmark() {
 
 void DemoApplication::KeyUp(unsigned char key) {
 	if (!benchmarkActive) {
-		if (key == ' ') {
-			activeScenarioIndex = (activeScenarioIndex + 1) % ArrayCount(SPHScenarios);
-			LoadScenario(activeScenarioIndex);
-		} else if (key == 'p') {
-			simulationActive = !simulationActive;
-		} else if (key == 'd') {
-			demoIndex = (demoIndex + 1) % 4;
-			LoadDemo(demoIndex);
-		} else if (key == 'r') {
-			LoadScenario(activeScenarioIndex);
-		} else if (key == 't' && demo->IsMultiThreadingSupported()) {
-			demo->ToggleMultiThreading();
-		} else if (key == 'b') {
-			StartBenchmark();
+		if (benchmarkDone) {
+			if (key == 27) {
+				benchmarkDone = false;
+			}
+		} else {
+			if (key == ' ') {
+				activeScenarioIndex = (activeScenarioIndex + 1) % ArrayCount(SPHScenarios);
+				LoadScenario(activeScenarioIndex);
+			} else if (key == 'p') {
+				simulationActive = !simulationActive;
+			} else if (key == 'd') {
+				demoIndex = (demoIndex + 1) % 4;
+				LoadDemo(demoIndex);
+			} else if (key == 'r') {
+				LoadScenario(activeScenarioIndex);
+			} else if (key == 't' && demo->IsMultiThreadingSupported()) {
+				demo->ToggleMultiThreading();
+			} else if (key == 'b') {
+				StartBenchmark();
+			}
 		}
 	} else {
 		if (key == 27) {
