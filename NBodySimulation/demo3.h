@@ -10,202 +10,205 @@
 #include "vecmath.h"
 #include "sph.h"
 #include "threadpool.h"
+#include "base.h"
 
-const char *kDemoName = "Demo 3";
+namespace Demo3 {
+	const char *kDemoName = "Demo 3";
 
-struct Particle {
-	Vec2f acceleration;
-	Vec2f velocity;
-	Vec2f prevPosition;
-	Vec2f curPosition;
-	Vec2i cellIndex;
-	Vec4f color;
-	float density;
-	float nearDensity;
-	float pressure;
-	float nearPressure;
-	std::vector<size_t> neighbors;
+	struct Particle {
+		Vec2f acceleration;
+		Vec2f velocity;
+		Vec2f prevPosition;
+		Vec2f curPosition;
+		Vec2i cellIndex;
+		Vec4f color;
+		float density;
+		float nearDensity;
+		float pressure;
+		float nearPressure;
+		std::vector<size_t> neighbors;
 
-	Particle(const Vec2f &position);
-};
+		Particle(const Vec2f &position);
+	};
 
-enum BodyType {
-	BodyType_None = 0,
+	enum BodyType {
+		BodyType_None = 0,
 
-	BodyType_Plane = 1,
-	BodyType_Circle = 2,
-	BodyType_LineSegment = 3,
-	BodyType_Polygon = 4,
+		BodyType_Plane = 1,
+		BodyType_Circle = 2,
+		BodyType_LineSegment = 3,
+		BodyType_Polygon = 4,
 
-	BodyType_Count,
-};
+		BodyType_Count,
+	};
 
-struct Body {
-public:
-	BodyType type;
+	struct Body {
+	public:
+		BodyType type;
 
-	inline Body(BodyType type) {
-		this->type = type;
-	}
-};
+		inline Body(BodyType type) {
+			this->type = type;
+		}
+	};
 
-struct Plane : Body {
-	Vec2f normal;
-	float distance;
+	struct Plane : Body {
+		Vec2f normal;
+		float distance;
 
-	inline Plane(const Vec2f &normal, const float distance) : 
-		Body(BodyType::BodyType_Plane) {
-		this->normal = normal;
-		this->distance = distance;
-	}
+		inline Plane(const Vec2f &normal, const float distance) :
+			Body(BodyType::BodyType_Plane) {
+			this->normal = normal;
+			this->distance = distance;
+		}
 
-	void Render();
-};
+		void Render();
+	};
 
-struct Circle : public Body {
-	Vec2f pos;
-	float radius;
+	struct Circle : public Body {
+		Vec2f pos;
+		float radius;
 
-	inline Circle(const Vec2f &pos, const float radius) :
-		Body(BodyType::BodyType_Circle) {
-		this->pos = pos;
-		this->radius = radius;
-	}
+		inline Circle(const Vec2f &pos, const float radius) :
+			Body(BodyType::BodyType_Circle) {
+			this->pos = pos;
+			this->radius = radius;
+		}
 
-	void Render();
-};
+		void Render();
+	};
 
-struct LineSegment : public Body {
-	Vec2f a, b;
+	struct LineSegment : public Body {
+		Vec2f a, b;
 
-	inline LineSegment(const Vec2f &a, const Vec2f &b) :
-		Body(BodyType::BodyType_LineSegment) {
-		this->a = a;
-		this->b = b;
-	}
+		inline LineSegment(const Vec2f &a, const Vec2f &b) :
+			Body(BodyType::BodyType_LineSegment) {
+			this->a = a;
+			this->b = b;
+		}
 
-	void Render();
-};
+		void Render();
+	};
 
-struct Poly : public Body {
-	std::vector<Vec2f> verts;
+	struct Poly : public Body {
+		std::vector<Vec2f> verts;
 
-	inline Poly(const std::vector<Vec2f> &verts) :
-		Body(BodyType::BodyType_Polygon) {
-		this->verts = verts;
-	}
+		inline Poly(const std::vector<Vec2f> &verts) :
+			Body(BodyType::BodyType_Polygon) {
+			this->verts = verts;
+		}
 
-	void Render();
-};
+		void Render();
+	};
 
-struct Cell {
-	std::vector<size_t> indices;
+	struct Cell {
+		std::vector<size_t> indices;
 
-	Cell();
-};
+		Cell();
+	};
 
-struct ParticleEmitter {
-	Vec2f position;
-	Vec2f direction;
-	float radius;
-	float speed;
-	float rate;
-	float duration;
-	float elapsed;
-	float totalElapsed;
-	int32_t isActive;
+	struct ParticleEmitter {
+		Vec2f position;
+		Vec2f direction;
+		float radius;
+		float speed;
+		float rate;
+		float duration;
+		float elapsed;
+		float totalElapsed;
+		int32_t isActive;
 
-	ParticleEmitter(const Vec2f &position, const Vec2f &direction, const float radius, const float speed, const float rate, const float duration) {
-		this->position = position;
-		this->direction = direction;
-		this->radius = radius;
-		this->speed = speed;
-		this->rate = rate;
-		this->duration = duration;
-		this->elapsed = 0;
-		this->totalElapsed = 0;
-		this->isActive = true;
-	}
+		ParticleEmitter(const Vec2f &position, const Vec2f &direction, const float radius, const float speed, const float rate, const float duration) {
+			this->position = position;
+			this->direction = direction;
+			this->radius = radius;
+			this->speed = speed;
+			this->rate = rate;
+			this->duration = duration;
+			this->elapsed = 0;
+			this->totalElapsed = 0;
+			this->isActive = true;
+		}
 
-	void Render();
-};
+		void Render();
+	};
 
-struct ParticleSimulation {
-	SPHParameters params;
-	SPHStatistics stats;
+	struct ParticleSimulation : BaseSimulation {
+		SPHParameters params;
+		SPHStatistics stats;
 
-	Vec2f gravity;
+		Vec2f gravity;
 
-	std::vector<Particle> particles;
+		std::vector<Particle> particles;
 
-	std::vector<Body *> bodies;
+		std::vector<Body *> bodies;
 
-	std::vector<ParticleEmitter> emitters;
+		std::vector<ParticleEmitter> emitters;
 
-	Cell *cells;
+		Cell *cells;
 
-	bool _isMultiThreading;
-	ThreadPool workerPool;
+		bool _isMultiThreading;
+		ThreadPool workerPool;
 
-	inline void InsertParticleIntoGrid(Particle &particle, const size_t particleIndex);
-	inline void RemoveParticleFromGrid(Particle &particle, const size_t particleIndex);
+		inline void InsertParticleIntoGrid(Particle &particle, const size_t particleIndex);
+		inline void RemoveParticleFromGrid(Particle &particle, const size_t particleIndex);
 
-	ParticleSimulation();
-	~ParticleSimulation();
+		ParticleSimulation();
+		~ParticleSimulation();
 
-	void ResetStats();
-	void ClearBodies();
-	void ClearParticles();
-	void ClearEmitters();
+		void ResetStats();
+		void ClearBodies();
+		void ClearParticles();
+		void ClearEmitters();
 
-	void AddPlane(const Vec2f &normal, const float distance);
-	void AddCircle(const Vec2f &pos, const float radius);
-	void AddLineSegment(const Vec2f &a, const Vec2f &b);
-	void AddPolygon(const size_t vertexCount, const Vec2f *verts);
+		void AddPlane(const Vec2f &normal, const float distance);
+		void AddCircle(const Vec2f &pos, const float radius);
+		void AddLineSegment(const Vec2f &a, const Vec2f &b);
+		void AddPolygon(const size_t vertexCount, const Vec2f *verts);
 
-	size_t AddParticle(const Vec2f &position, const Vec2f &force);
-	void AddVolume(const Vec2f &center, const Vec2f &force, const int countX, const int countY, const float spacing);
-	void AddEmitter(const Vec2f &position, const Vec2f &direction, const float radius, const float speed, const float rate, const float duration);
+		size_t AddParticle(const Vec2f &position, const Vec2f &force);
+		void AddVolume(const Vec2f &center, const Vec2f &force, const int countX, const int countY, const float spacing);
+		void AddEmitter(const Vec2f &position, const Vec2f &direction, const float radius, const float speed, const float rate, const float duration);
 
-	void UpdateEmitter(ParticleEmitter *emitter, const float deltaTime);
-	void ViscosityForces(const size_t startIndex, const size_t endIndex, const float deltaTime);
-	void NeighborSearch(const size_t startIndex, const size_t endIndex, const float deltaTime);
-	void DensityAndPressure(const size_t startIndex, const size_t endIndex, const float deltaTime);
-	void DeltaPositions(const size_t startIndex, const size_t endIndex, const float deltaTime);
+		void UpdateEmitter(ParticleEmitter *emitter, const float deltaTime);
+		void ViscosityForces(const size_t startIndex, const size_t endIndex, const float deltaTime);
+		void NeighborSearch(const size_t startIndex, const size_t endIndex, const float deltaTime);
+		void DensityAndPressure(const size_t startIndex, const size_t endIndex, const float deltaTime);
+		void DeltaPositions(const size_t startIndex, const size_t endIndex, const float deltaTime);
 
-	void Update(const float deltaTime);
-	void Render(const float worldToScreenScale);
+		void Update(const float deltaTime);
+		void Render(const float worldToScreenScale);
 
-	inline void SetGravity(const Vec2f &gravity) {
-		this->gravity = gravity;
-	}
+		inline void SetGravity(const Vec2f &gravity) {
+			this->gravity = gravity;
+		}
 
-	inline const SPHParameters &GetParams() {
-		return params;
-	}
-	inline const SPHStatistics &GetStats() {
-		return stats;
-	}
-	inline void SetParams(const SPHParameters &params) {
-		this->params = params;
-	}
+		inline const SPHParameters &GetParams() {
+			return params;
+		}
+		inline const SPHStatistics &GetStats() {
+			return stats;
+		}
+		inline void SetParams(const SPHParameters &params) {
+			this->params = params;
+		}
 
-	inline size_t GetParticleCount() {
-		return particles.size();
-	}
+		inline size_t GetParticleCount() {
+			return particles.size();
+		}
 
-	inline void ToggleMultiThreading() {
-		_isMultiThreading = !_isMultiThreading;
-	}
-	inline bool IsMultiThreadingSupported() {
-		return true;
-	}
-	inline bool IsMultiThreading() {
-		return _isMultiThreading;
-	}
-	inline size_t GetWorkerThreadCount() {
-		return workerPool.GetThreadCount();
-	}
+		inline void ToggleMultiThreading() {
+			_isMultiThreading = !_isMultiThreading;
+		}
+		inline bool IsMultiThreadingSupported() {
+			return true;
+		}
+		inline bool IsMultiThreading() {
+			return _isMultiThreading;
+		}
+		inline size_t GetWorkerThreadCount() {
+			return workerPool.GetThreadCount();
+		}
+	};
 };
 
 #endif // DEMO3_H

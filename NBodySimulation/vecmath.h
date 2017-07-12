@@ -6,6 +6,8 @@
 
 #include <algorithm>
 
+const float kDeg2Rad = (float)M_PI / 180.0f;
+
 union Vec2i {
 	struct {
 		int x, y;
@@ -134,6 +136,13 @@ union Mat4f {
 		result.col3.z = 0.0f;
 		return (result);
 	}
+};
+
+union Pixel {
+	struct {
+		uint8_t r, g, b, a;
+	};
+	uint8_t m[4];
 };
 
 inline float ScalarLerp(float a, float t, float b) {
@@ -313,5 +322,14 @@ const static Vec4f ColorGreen = Vec4f(0.0f, 1.0f, 0.0f, 1.0f);
 const static Vec4f ColorBlue = Vec4f(0.0f, 0.0f, 1.0f, 1.0f);
 const static Vec4f ColorLightGray = Vec4f(0.3f, 0.3f, 0.3f, 1.0f);
 const static Vec4f ColorDarkGray = Vec4f(0.2f, 0.2f, 0.2f, 1.0f);
+
+#define RGBAToPixel(rgba) {((rgba) >> 0) & 0xFF, ((rgba) >> 8) & 0xFF, ((rgba) >> 16) & 0xFF, ((rgba) >> 24) & 0xFF}
+const static float INV255 = 1.0f / 255.0f;
+
+inline Vec4f RGBAToLinear(uint32_t rgba) {
+	Pixel pixel = RGBAToPixel(rgba);
+	Vec4f result = Vec4f(pixel.r * INV255, pixel.g * INV255, pixel.b * INV255, pixel.a * INV255);
+	return(result);
+}
 
 #endif

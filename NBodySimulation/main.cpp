@@ -16,8 +16,7 @@ Usage:
 
 Compile main.cpp only and link with opengl, freeglut and glew.
 
-Code/Demo type can be changed from source only, just change the DEMO define below.
-To create a benchmarking csv, just set the BENCHMARK define to 1.
+TODO: New usage!
 
 Notes:
 
@@ -34,9 +33,6 @@ MIT License
 Copyright (c) 2017 Torsten Spaete
 -------------------------------------------------------------------------------------------------------------------
 */
-#define DEMO 1
-#define BENCHMARK 0
-
 #include <GL/glew.h>
 #if _WIN32
 // @NOTE(final): windef.h defines min/max macros defined in lowerspace, this will break std::min/max so we have to tell the header we dont want that macros!
@@ -76,6 +72,10 @@ static void KeyPressedFromGLUT(unsigned char key, int a, int b) {
 	globalApp->KeyUp(key);
 }
 
+static void SpecialKeyPressedFromGLUT(int key, int a, int b) {
+	globalApp->KeyUp(key);
+}
+
 int main(int argc, char **args) {
 	Application *app = globalApp = new DemoApplication();
 	Window *window = app->GetWindow();
@@ -87,7 +87,6 @@ int main(int argc, char **args) {
 	glutCreateWindow("C++ NBody Simulation");
 
 	glewInit();
-	fprintf(stdout, "Status: Using GLEW %s\n", glewGetString(GLEW_VERSION));
 
 #if _WIN32
 	if (WGL_EXT_swap_control) {
@@ -99,6 +98,7 @@ int main(int argc, char **args) {
 	glutReshapeFunc(ResizeFromGLUT);
 	glutIdleFunc(DisplayFromGLUT);
 	glutKeyboardUpFunc(KeyPressedFromGLUT);
+	glutSpecialUpFunc(SpecialKeyPressedFromGLUT);
 
 	lastFrameClock = std::chrono::high_resolution_clock::now();
 	lastFrameTime = 0.0f;

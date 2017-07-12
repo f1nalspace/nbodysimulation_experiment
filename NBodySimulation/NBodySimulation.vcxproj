@@ -76,7 +76,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>..\include;$(IncludePath)</IncludePath>
-    <LibraryPath>..\lib\x64;$(LibraryPath)</LibraryPath>
+    <LibraryPath>..\lib\win32_x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -84,7 +84,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>..\include;$(IncludePath)</IncludePath>
-    <LibraryPath>..\lib\x64;$(LibraryPath)</LibraryPath>
+    <LibraryPath>..\lib\win32_x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -113,7 +113,7 @@
       <AdditionalDependencies>freeglut.lib;opengl32.lib;glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(SolutionDir)lib\x64\*.dll" "$(TargetDir)"</Command>
+      <Command>copy "$(SolutionDir)lib\win32_x64\*.dll" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -151,12 +151,13 @@
       <AdditionalDependencies>freeglut.lib;opengl32.lib;glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(SolutionDir)lib\x64\*.dll" "$(TargetDir)"</Command>
+      <Command>copy "$(SolutionDir)lib\win32_x64\*.dll" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="app.h" />
     <None Include="demo2.cpp" />
+    <ClInclude Include="base.h" />
     <ClInclude Include="demo3.cpp" />
     <ClInclude Include="demo4.cpp" />
     <ClInclude Include="app.cpp" />
@@ -168,9 +169,11 @@
     <ClInclude Include="demo2.h" />
     <ClInclude Include="demo3.h" />
     <ClInclude Include="demo4.h" />
+    <ClInclude Include="pseudorandom.h" />
     <ClInclude Include="render.h" />
     <ClInclude Include="sph.h" />
     <ClInclude Include="threadpool.h" />
+    <ClInclude Include="utils.h" />
     <ClInclude Include="vecmath.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

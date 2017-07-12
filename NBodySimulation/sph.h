@@ -10,11 +10,7 @@
 #include <math.h>
 
 #include "vecmath.h"
-
-#define force_inline __forceinline
-#define StaticAssert(e) extern char (*ct_assert(void)) [sizeof(char[1 - 2*!(e)])]
-
-const float kDeg2Rad = (float)M_PI / 180.0f;
+#include "utils.h"
 
 //
 // Boundary condition
