@@ -138,6 +138,7 @@ namespace Demo4 {
 		SPHStatistics stats;
 
 		Vec2f gravity;
+		Vec2f externalForce;
 
 		size_t particleCount;
 		ParticleData *particleDatas;
@@ -184,12 +185,19 @@ namespace Demo4 {
 		void Update(const float deltaTime);
 		void Render(const float worldToScreenScale);
 
+		inline void AddExternalForces(const Vec2f &force) {
+			externalForce += force;
+		}
+		inline void ClearExternalForce() {
+			externalForce = Vec2f(0, 0);
+		}
+
 		inline size_t GetParticleCount() {
 			return particleCount;
 		}
 
-		inline void ToggleMultiThreading() {
-			isMultiThreading = !isMultiThreading;
+		inline void SetMultiThreading(const bool value) {
+			isMultiThreading = value;
 		}
 		inline bool IsMultiThreadingSupported() {
 			return true;
@@ -208,7 +216,7 @@ namespace Demo4 {
 		inline const SPHParameters &GetParams() {
 			return params;
 		}
-		inline const SPHStatistics &GetStats() {
+		inline SPHStatistics &GetStats() {
 			return stats;
 		}
 		inline void SetParams(const SPHParameters &params) {

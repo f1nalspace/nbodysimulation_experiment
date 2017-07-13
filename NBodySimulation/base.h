@@ -23,12 +23,15 @@ public:
 	virtual void Update(const float deltaTime) = 0;
 	virtual void Render(const float worldToScreenScale) = 0;
 
+	virtual void AddExternalForces(const Vec2f &force) = 0;
+	virtual void ClearExternalForce() = 0;
+
 	virtual size_t GetParticleCount() = 0;
 	virtual void SetGravity(const Vec2f &gravity) = 0;
 	virtual const SPHParameters &GetParams() = 0;
-	virtual const SPHStatistics &GetStats() = 0;
+	virtual SPHStatistics &GetStats() = 0;
 	virtual void SetParams(const SPHParameters &params) = 0;
-	virtual void ToggleMultiThreading() = 0;
+	virtual void SetMultiThreading(const bool value) = 0;
 	virtual bool IsMultiThreadingSupported() = 0;
 	virtual bool IsMultiThreading() = 0;
 	virtual size_t GetWorkerThreadCount() = 0;

@@ -19,10 +19,10 @@ const char *kAppVersion = "1.0";
 #define VERY_SHORT_BENCHMARK 0
 
 #if !VERY_SHORT_BENCHMARK
-const size_t kBenchmarkFrameCount = 250;
-const size_t kBenchmarkIterationCount = 4;
+const size_t kBenchmarkFrameCount = 50;
+const size_t kBenchmarkIterationCount = 10;
 #else
-const size_t kBenchmarkFrameCount = 10;
+const size_t kBenchmarkFrameCount = 2;
 const size_t kBenchmarkIterationCount = 2;
 #endif
 const size_t kDemoCount = 4;
@@ -65,16 +65,16 @@ struct Application {
 
 struct FrameStatistics {
 	SPHStatistics stats;
-	float frameTime;
+	float simulationTime;
 
 	FrameStatistics() {
 		this->stats = SPHStatistics();
-		this->frameTime = 0.0f;
+		this->simulationTime = 0.0f;
 	}
 
-	FrameStatistics(const SPHStatistics &stats, const float frameTime) {
+	FrameStatistics(const SPHStatistics &stats, const float simulationTime) {
 		this->stats = stats;
-		this->frameTime = frameTime;
+		this->simulationTime = simulationTime;
 	}
 };
 
@@ -102,6 +102,7 @@ struct DemoApplication : public Application {
 	bool benchmarkDone;
 	std::vector<BenchmarkIteration> benchmarkIterations;
 	BenchmarkIteration *activeBenchmarkIteration;
+	size_t benchmarkFrameCount;
 
 	std::vector<DemoStatistics> demoStats;
 
@@ -111,6 +112,9 @@ struct DemoApplication : public Application {
 	bool simulationActive;
 	size_t activeScenarioIndex;
 	std::string activeScenarioName;
+
+	bool multiThreadingActive;
+	bool externalForcesApplying;
 
 	void LoadDemo(const size_t demoIndex);
 
@@ -124,6 +128,7 @@ struct DemoApplication : public Application {
 	~DemoApplication();
 	void UpdateAndRender(const float frameTime, const uint64_t cycles);
 	void KeyUp(unsigned char key);
+	void KeyDown(unsigned char key);
 	void LoadScenario(size_t scenarioIndex);
 };
 

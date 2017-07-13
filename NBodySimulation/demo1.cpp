@@ -82,7 +82,8 @@ namespace Demo1 {
 	}
 
 	ParticleSimulation::ParticleSimulation() :
-		_gravity(Vec2f(0, 0)) {
+		_gravity(Vec2f(0, 0)),
+		_externalForce(Vec2f(0, 0)) {
 		_grid = new Grid(kSPHGridTotalCount);
 		_workerPool = new ThreadPool();
 		_isMultiThreading = _workerPool->GetThreadCount() > 1;
@@ -100,6 +101,14 @@ namespace Demo1 {
 		}
 		delete _workerPool;
 		delete _grid;
+	}
+
+	void ParticleSimulation::AddExternalForces(const Vec2f &force) {
+		_externalForce += force;
+	}
+
+	void ParticleSimulation::ClearExternalForce() {
+		_externalForce = Vec2f(0.0f);
 	}
 
 	void ParticleSimulation::AddPlane(const Vec2f & normal, const float distance) {
@@ -341,7 +350,6 @@ namespace Demo1 {
 
 	void ParticleSimulation::Update(const float deltaTime) {
 		const float invDt = 1.0f / deltaTime;
-		const float nanosToMilliseconds = 1.0f / 1000000;
 		const bool useMultiThreading = _isMultiThreading;
 
 		// Emitters
@@ -360,7 +368,7 @@ namespace Demo1 {
 			auto startClock = std::chrono::high_resolution_clock::now();
 			for (size_t particleIndex = 0; particleIndex < _particles.size(); ++particleIndex) {
 				Particle *particle = _particles[particleIndex];
-				particle->SetAcceleration(particle->GetAcceleration() + _gravity);
+				particle->SetAcceleration(particle->GetAcceleration() + _gravity + _externalForce);
 				particle->IntegrateForces(deltaTime);
 			}
 			auto deltaClock = std::chrono::high_resolution_clock::now() - startClock;

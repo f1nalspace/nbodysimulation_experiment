@@ -93,9 +93,12 @@ static void SpecialKeyPressedFromGLUT(int key, int a, int b) {
 	globalApp->KeyUp(key);
 }
 
-int main(int argc, char **args) {
+int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 	Application *app = globalApp = new DemoApplication();
 	Window *window = app->GetWindow();
+
+	int argc = 0;
+	char **args = nullptr;
 
 	glutInit(&argc, args);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);

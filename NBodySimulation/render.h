@@ -12,6 +12,18 @@ struct OSDState {
 	void *font;
 };
 
+inline void DrawRectangle(const Vec2f &p, const Vec2f &size, const Vec4f &color, const float lineWidth) {
+	glLineWidth(lineWidth);
+	glColor4fv(&color.m[0]);
+	glBegin(GL_LINE_LOOP);
+	glVertex2f(p.x + size.x, p.y + size.y);
+	glVertex2f(p.x, p.y + size.y);
+	glVertex2f(p.x, p.y);
+	glVertex2f(p.x + size.x, p.y);
+	glEnd();
+	glLineWidth(1.0f);
+}
+
 inline void FillRectangle(const Vec2f &p, const Vec2f &size, const Vec4f &color) {
 	glColor4fv(&color.m[0]);
 	glBegin(GL_QUADS);

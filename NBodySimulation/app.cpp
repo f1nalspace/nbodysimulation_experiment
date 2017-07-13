@@ -10,6 +10,7 @@
 
 #include "sph.h"
 #include "pseudorandom.h"
+#include "chart.h"
 
 #include "demo1.cpp"
 #include "demo2.cpp"
@@ -37,19 +38,21 @@ void Application::Resize(const int width, const int height) {
 }
 
 DemoApplication::DemoApplication() :
-	Application() {
+	Application(),
+	externalForcesApplying(false),
+	multiThreadingActive(true),
+	activeScenarioIndex(0),
+	simulationActive(true),
+	demoIndex(0),
+	demo(nullptr) {
 
 	demoStats.reserve(kDemoCount);
-
-	activeScenarioIndex = 0;
-	simulationActive = true;
-	demoIndex = 0;
-	demo = nullptr;
 	LoadDemo(demoIndex);
 
 	benchmarkActive = false;
 	benchmarkDone = false;
 	activeBenchmarkIteration = nullptr;
+	benchmarkFrameCount = 0;
 	benchmarkIterations.reserve(kBenchmarkIterationCount);
 
 	//StartBenchmark();
@@ -59,28 +62,13 @@ DemoApplication::~DemoApplication() {
 	delete demo;
 }
 
-template <typename T>
-static void UpdateMin(T &value, T a) {
-	value = std::min(value, a);
-}
-
-template <typename T>
-static void UpdateMax(T &value, T a) {
-	value = std::max(value, a);
-}
-
-template <typename T>
-static void Accumulate(T &value, T a) {
-	value += a;
-}
-
 void DemoApplication::PushDemoStatistics() {
 	DemoStatistics demoStat = DemoStatistics();
 
 	size_t avgCount = 0;
-	demoStat.min.frameTime = FLT_MAX;
-	demoStat.max.frameTime = 0.0f;
-	demoStat.avg.frameTime = 0.0f;
+	demoStat.min.simulationTime = FLT_MAX;
+	demoStat.max.simulationTime = 0.0f;
+	demoStat.avg.simulationTime = 0.0f;
 
 	size_t maxFrameCount = 0;
 	const size_t iterationCount = benchmarkIterations.size();
@@ -93,7 +81,7 @@ void DemoApplication::PushDemoStatistics() {
 		for (size_t frameIndex = 0; frameIndex < frameCount; ++frameIndex) {
 			FrameStatistics *frameStat = &iteration->frames[frameIndex];
 
-			UpdateMin(demoStat.min.frameTime, frameStat->frameTime);
+			UpdateMin(demoStat.min.simulationTime, frameStat->simulationTime);
 			UpdateMin(demoStat.min.stats.time.collisions, frameStat->stats.time.collisions);
 			UpdateMin(demoStat.min.stats.time.deltaPositions, frameStat->stats.time.deltaPositions);
 			UpdateMin(demoStat.min.stats.time.densityAndPressure, frameStat->stats.time.densityAndPressure);
@@ -104,7 +92,7 @@ void DemoApplication::PushDemoStatistics() {
 			UpdateMin(demoStat.min.stats.time.updateGrid, frameStat->stats.time.updateGrid);
 			UpdateMin(demoStat.min.stats.time.viscosityForces, frameStat->stats.time.viscosityForces);
 
-			UpdateMax(demoStat.max.frameTime, frameStat->frameTime);
+			UpdateMax(demoStat.max.simulationTime, frameStat->simulationTime);
 			UpdateMax(demoStat.max.stats.time.collisions, frameStat->stats.time.collisions);
 			UpdateMax(demoStat.max.stats.time.deltaPositions, frameStat->stats.time.deltaPositions);
 			UpdateMax(demoStat.max.stats.time.densityAndPressure, frameStat->stats.time.densityAndPressure);
@@ -115,7 +103,7 @@ void DemoApplication::PushDemoStatistics() {
 			UpdateMax(demoStat.max.stats.time.updateGrid, frameStat->stats.time.updateGrid);
 			UpdateMax(demoStat.max.stats.time.viscosityForces, frameStat->stats.time.viscosityForces);
 
-			Accumulate(demoStat.avg.frameTime, frameStat->frameTime);
+			Accumulate(demoStat.avg.simulationTime, frameStat->simulationTime);
 			Accumulate(demoStat.avg.stats.time.collisions, frameStat->stats.time.collisions);
 			Accumulate(demoStat.avg.stats.time.deltaPositions, frameStat->stats.time.deltaPositions);
 			Accumulate(demoStat.avg.stats.time.densityAndPressure, frameStat->stats.time.densityAndPressure);
@@ -132,7 +120,7 @@ void DemoApplication::PushDemoStatistics() {
 
 	if (avgCount > 0) {
 		const float avg = 1.0f / (float)avgCount;
-		demoStat.avg.frameTime *= avg;
+		demoStat.avg.simulationTime *= avg;
 		demoStat.avg.stats.time.collisions *= avg;
 		demoStat.avg.stats.time.deltaPositions *= avg;
 		demoStat.avg.stats.time.densityAndPressure *= avg;
@@ -149,164 +137,42 @@ void DemoApplication::PushDemoStatistics() {
 	demoStats.push_back(demoStat);
 }
 
-
-
 void DemoApplication::RenderBenchmark(OSDState *osdState, const float width, const float height) {
 	std::string processorName = GetProcessorName();
 
-	float areaScale = 1.0f;
-	float areaWidth = width * areaScale;
-	float areaHeight = height * areaScale - (osdState->fontHeight * 2.0f);
-	float areaLeft = 0;
-	float areaBottom = 0;
-	float fontHeight = 14.0f;
-
-	float sampleLabelFontHeight = (float)fontHeight;
-	float sampleAxisMargin = 10.0f;
-	float sampleAxisHeight = sampleLabelFontHeight + (sampleAxisMargin * 2.0f);
-
-	float legendLabelPadding = 5.0f;
-	float legendBulletPadding = 5.0f;
-	float legendMargin = 0.0f;
-	float legendFontHeight = (float)fontHeight;
-	float legendBulletSize = (float)fontHeight * 0.75f;
-	float legendHeight = std::max(legendFontHeight, legendBulletSize) + (legendMargin * 2.0f);
-
-	float chartOriginX = areaLeft;
-	float chartOriginY = areaBottom + sampleAxisHeight + legendHeight;
-	float chartHeight = areaHeight - (sampleAxisHeight + legendHeight);
-	float chartWidth = areaWidth;
-
-	const int seriesCount = kDemoCount;
-
-	std::vector<std::string> legendLabels;
-	legendLabels.push_back("Demo 1");
-	legendLabels.push_back("Demo 2");
-	legendLabels.push_back("Demo 3");
-	legendLabels.push_back("Demo 4");
-	assert(seriesCount == legendLabels.size());
-
-	std::vector<std::string> sampleLabels;
-	sampleLabels.push_back("Frametime");
-	sampleLabels.push_back("Integration");
-	sampleLabels.push_back("Viscosity forces");
-	sampleLabels.push_back("Predict");
-	sampleLabels.push_back("Update grid");
-	sampleLabels.push_back("Neighbor search");
-	sampleLabels.push_back("Density and pressure");
-	sampleLabels.push_back("Delta positions");
-	sampleLabels.push_back("Collisions");
-	const size_t sampleCount = sampleLabels.size();
+	Chart chart = Chart();
+	chart.axisFormat = "%.2f ms";
+	chart.AddSampleLabel("Total");
+	chart.AddSampleLabel("Integration");
+	chart.AddSampleLabel("Viscosity");
+	chart.AddSampleLabel("Predict");
+	chart.AddSampleLabel("Grid");
+	chart.AddSampleLabel("Neighbors");
+	chart.AddSampleLabel("Pressure");
+	chart.AddSampleLabel("Delta");
+	chart.AddSampleLabel("Collisions");
 
 	RandomSeries colorRandomSeries = RandomSeed(1337);
-	std::vector<Vec4f> seriesColors;
-	for (int seriesIndex = 0; seriesIndex < seriesCount; ++seriesIndex) {
-		seriesColors.push_back(RandomColor(&colorRandomSeries));
-	}
-	assert(seriesColors.size() == legendLabels.size());
-
-	std::vector<float> values[seriesCount];
-	RandomSeries valueRandomSeries = RandomSeed(1337);
-	for (int seriesIndex = 0; seriesIndex < seriesCount; ++seriesIndex) {
+	for (size_t seriesIndex = 0; seriesIndex < demoStats.size(); ++seriesIndex) {
 		DemoStatistics *demoStat = &demoStats[seriesIndex];
-		values[seriesIndex].reserve(sampleCount);
-		values[seriesIndex].push_back(demoStat->avg.frameTime * 1000.0f);
-		values[seriesIndex].push_back(demoStat->avg.stats.time.integration);
-		values[seriesIndex].push_back(demoStat->avg.stats.time.viscosityForces);
-		values[seriesIndex].push_back(demoStat->avg.stats.time.predict);
-		values[seriesIndex].push_back(demoStat->avg.stats.time.updateGrid);
-		values[seriesIndex].push_back(demoStat->avg.stats.time.neighborSearch);
-		values[seriesIndex].push_back(demoStat->avg.stats.time.densityAndPressure);
-		values[seriesIndex].push_back(demoStat->avg.stats.time.deltaPositions);
-		values[seriesIndex].push_back(demoStat->avg.stats.time.collisions);
-		assert(sampleCount == values[seriesIndex].size());
+		ChartSeries series = ChartSeries();
+		series.color = RandomColor(&colorRandomSeries);
+		series.title = std::string("Demo ") + std::to_string(seriesIndex + 1);
+		FrameStatistics *frameStats = &demoStat->max;
+		series.AddValue(frameStats->simulationTime);
+		series.AddValue(frameStats->stats.time.integration);
+		series.AddValue(frameStats->stats.time.viscosityForces);
+		series.AddValue(frameStats->stats.time.predict);
+		series.AddValue(frameStats->stats.time.updateGrid);
+		series.AddValue(frameStats->stats.time.neighborSearch);
+		series.AddValue(frameStats->stats.time.densityAndPressure);
+		series.AddValue(frameStats->stats.time.deltaPositions);
+		series.AddValue(frameStats->stats.time.collisions);
+		chart.AddSeries(series);
 	}
 
-	float minValue = 0;
-	float maxValue = 0;
-	for (int seriesIndex = 0; seriesIndex < seriesCount; ++seriesIndex) {
-		for (int sampleIndex = 0; sampleIndex < sampleCount; ++sampleIndex) {
-			minValue = std::min(minValue, values[seriesIndex][sampleIndex]);
-			maxValue = std::max(maxValue, values[seriesIndex][sampleIndex]);
-		}
-	}
-	float valueRange = maxValue - minValue;
-	float invValueRange = 1.0f / valueRange;
-
-	float sampleWidth = chartWidth / (float)sampleCount;
-	float sampleMargin = 10;
-	float subSampleMargin = 5;
-
-	// Chart area
-	glColor4f(0.1f, 0.1f, 0.1f, 1);
-	glBegin(GL_QUADS);
-	glVertex2f(areaLeft, areaBottom);
-	glVertex2f(areaLeft + areaWidth, areaBottom);
-	glVertex2f(areaLeft + areaWidth, areaBottom + areaHeight);
-	glVertex2f(areaLeft, areaBottom + areaHeight);
-	glEnd();
-
-	// Sample lines
-	glColor4f(0.25f, 0.25f, 0.25f, 1);
-	glLineWidth(1);
-	for (int sampleIndex = 1; sampleIndex < sampleCount; ++sampleIndex) {
-		glBegin(GL_LINES);
-		glVertex2f(areaLeft + (float)sampleIndex * sampleWidth, areaBottom + legendHeight);
-		glVertex2f(areaLeft + (float)sampleIndex * sampleWidth, areaBottom + legendHeight + (areaHeight - legendHeight));
-		glEnd();
-	}
-	glLineWidth(1);
-
-	// Axis lines
-	glColor4f(0.65f, 0.65f, 0.65f, 1);
-	glLineWidth(1);
-	glBegin(GL_LINES);
-	glVertex2f(chartOriginX, chartOriginY);
-	glVertex2f(chartOriginX + chartWidth, chartOriginY);
-	glVertex2f(chartOriginX, chartOriginY);
-	glVertex2f(chartOriginX, chartOriginY + chartHeight);
-	glEnd();
-	glLineWidth(1);
-
-	// Bars
-	float barWidth = sampleWidth - (sampleMargin * 2.0f);
-	float seriesBarWidth = (barWidth - (subSampleMargin * (float)(seriesCount - 1))) / (float)seriesCount;
-	for (int sampleIndex = 0; sampleIndex < sampleCount; ++sampleIndex) {
-		for (int seriesIndex = 0; seriesIndex < seriesCount; ++seriesIndex) {
-			Vec4f seriesColor = seriesColors[seriesIndex];
-			float value = values[seriesIndex][sampleIndex];
-			float sampleHeight = (value * invValueRange) * chartHeight;
-			float sampleLeft = chartOriginX + (float)sampleIndex * sampleWidth + sampleMargin + ((float)seriesIndex * seriesBarWidth) + ((float)seriesIndex * subSampleMargin);
-			float sampleRight = sampleLeft + seriesBarWidth;
-			float sampleBottom = chartOriginY;
-			float sampleTop = chartOriginY + sampleHeight;
-			FillRectangle(Vec2f(sampleLeft, sampleBottom), Vec2f(abs(sampleRight - sampleLeft), abs(sampleBottom - sampleTop)), seriesColor);
-		}
-	}
-
-	// Sample labels
-	for (int sampleIndex = 0; sampleIndex < sampleCount; ++sampleIndex) {
-		const char *sampleLabel = sampleLabels[sampleIndex].c_str();
-		float textWidth = (float)GetTextWidth(sampleLabel, osdState->font);
-		float xLeft = chartOriginX + (float)sampleIndex * sampleWidth + sampleWidth * 0.5f - textWidth * 0.5f;
-		float yMiddle = chartOriginY - sampleLabelFontHeight - sampleAxisMargin;
-		RenderText(xLeft, yMiddle, sampleLabel, Vec4f(1, 1, 1, 1), osdState->font);
-	}
-
-	// Legend
-	float legendCurLeft = areaLeft;
-	float legendBottom = areaBottom + legendMargin;
-	for (int legendLabelIndex = 0; legendLabelIndex < legendLabels.size(); ++legendLabelIndex) {
-		Vec4f legendColor = seriesColors[legendLabelIndex];
-		FillRectangle(Vec2f(legendCurLeft, legendBottom), Vec2f(legendBulletSize, legendBulletSize), legendColor);
-		legendCurLeft += legendBulletSize + legendBulletPadding;
-
-		const char *legendLabel = legendLabels[legendLabelIndex].c_str();
-		float labelWidth = (float)GetTextWidth(legendLabel, osdState->font);
-		float labelY = legendBottom - legendFontHeight * 0.5f + legendBulletSize * 0.5f;
-		RenderText(legendCurLeft, labelY, legendLabel, Vec4f(1, 1, 1, 1), osdState->font);
-		legendCurLeft += labelWidth + legendLabelPadding;
-	}
+	float viewport[4] = {0.0f, 0.0f, width, height - (osdState->fontHeight * 2.0f)};
+	chart.RenderBars(viewport, osdState->font, (float)osdState->fontHeight);
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	char osdBuffer[256];
@@ -319,13 +185,22 @@ void DemoApplication::RenderBenchmark(OSDState *osdState, const float width, con
 
 void DemoApplication::UpdateAndRender(const float frameTime, const uint64_t cycles) {
 	if (simulationActive) {
-		for (int step = 0; step < kSPHSubsteps; ++step) {
-			demo->Update(kSPHSubstepDeltaTime);
+		externalForcesApplying = false;
+
+		float updateTime = 0.0f;
+		{
+			auto startClock = std::chrono::high_resolution_clock::now();
+			for (int step = 0; step < kSPHSubsteps; ++step) {
+				demo->Update(kSPHSubstepDeltaTime);
+			}
+			auto deltaClock = std::chrono::high_resolution_clock::now() - startClock;
+			updateTime = std::chrono::duration_cast<std::chrono::nanoseconds>(deltaClock).count() * nanosToMilliseconds;
 		}
 
 		if (benchmarkActive) {
 			assert(activeBenchmarkIteration != nullptr);
-			activeBenchmarkIteration->frames.push_back(FrameStatistics(demo->GetStats(), frameTime));
+			activeBenchmarkIteration->frames.push_back(FrameStatistics(demo->GetStats(), updateTime));
+			++benchmarkFrameCount;
 
 			if (activeBenchmarkIteration->frames.size() == kBenchmarkFrameCount) {
 				// Iteration complete
@@ -337,6 +212,7 @@ void DemoApplication::UpdateAndRender(const float frameTime, const uint64_t cycl
 					// Demo complete
 					if (demoIndex == (kDemoCount - 1)) {
 						// Benchmark complete
+						benchmarkFrameCount = 0;
 						simulationActive = false;
 						benchmarkDone = true;
 						benchmarkActive = false;
@@ -455,10 +331,20 @@ void DemoApplication::UpdateAndRender(const float frameTime, const uint64_t cycl
 		DrawOSDLine(&osdState, osdBuffer);
 
 		const char *bigText = "Benchmarking";
-		float bigTextSize = 100.0f;
-		float bigTextX = w * 0.5f - GetStrokeTextWidth(bigText, bigTextSize) * 0.5f;
+		float bigTextSize = 30.0f;
+		float bigTextWidth = GetStrokeTextWidth(bigText, bigTextSize);
+		float bigTextX = w * 0.5f - bigTextWidth * 0.5f;
 		float bigTextY = h * 0.5f - bigTextSize * 0.5f;
-		RenderStrokeText(bigTextX, h * 0.5f, bigText, Vec4f(1, 1, 1, 1), bigTextSize, 4.0f);
+		RenderStrokeText(bigTextX, h * 0.5f, bigText, Vec4f(1, 1, 1, 1), bigTextSize, 2.0f);
+
+		float progressWidth = bigTextWidth;
+		float progressHeight = bigTextSize * 0.5f;
+		float progressLeft = (w - progressWidth) * 0.5f;
+		float progressBottom = bigTextY - progressHeight;
+		size_t totalFrames = kBenchmarkFrameCount * kBenchmarkIterationCount * kDemoCount;
+		float framesPercentage = benchmarkFrameCount / (float)totalFrames;
+		FillRectangle(Vec2f(progressLeft, progressBottom), Vec2f(progressWidth * framesPercentage, progressHeight), Vec4f(0.1f, 0.1f, 0.6f, 1));
+		DrawRectangle(Vec2f(progressLeft, progressBottom), Vec2f(progressWidth, progressHeight), Vec4f(1, 1, 1, 1), 2.0f);
 	}
 }
 
@@ -490,12 +376,14 @@ void DemoApplication::LoadDemo(const size_t demoIndex) {
 		default:
 			assert(false);
 	}
+	demo->SetMultiThreading(multiThreadingActive);
 	LoadScenario(activeScenarioIndex);
 }
 
 void DemoApplication::StartBenchmark() {
 	benchmarkActive = true;
 	benchmarkDone = false;
+	benchmarkFrameCount = 0;
 
 	benchmarkIterations.clear();
 	benchmarkIterations.push_back(BenchmarkIteration(kBenchmarkFrameCount));
@@ -509,10 +397,42 @@ void DemoApplication::StartBenchmark() {
 }
 
 void DemoApplication::StopBenchmark() {
+	benchmarkFrameCount = 0;
 	simulationActive = false;
 	benchmarkActive = false;
 	benchmarkDone = true;
 	activeBenchmarkIteration = nullptr;
+}
+
+void DemoApplication::KeyDown(unsigned char key) {
+	if (!benchmarkActive) {
+		if (!benchmarkDone && simulationActive) {
+			bool doApplyingForces = false;
+			Vec2f applyForceDirection = Vec2f(0, 0);
+
+			if (key == GLUT_KEY_UP) {
+				doApplyingForces = true;
+				applyForceDirection += Vec2f(0, 1);
+			} else if (key == GLUT_KEY_DOWN) {
+				doApplyingForces = true;
+				applyForceDirection += Vec2f(0, -1);
+			}
+
+			if (key == GLUT_KEY_LEFT) {
+				doApplyingForces = true;
+				applyForceDirection += Vec2f(-1, 0);
+			} else if (key == GLUT_KEY_RIGHT) {
+				doApplyingForces = true;
+				applyForceDirection += Vec2f(1, 0);
+			}
+
+			if (doApplyingForces) {
+				float strenth = 10.0f;
+				externalForcesApplying = true;
+				demo->AddExternalForces(applyForceDirection * strenth);
+			}
+		}
+	}
 }
 
 void DemoApplication::KeyUp(unsigned char key) {
@@ -534,7 +454,8 @@ void DemoApplication::KeyUp(unsigned char key) {
 			} else if (key == 'r') {
 				LoadScenario(activeScenarioIndex);
 			} else if (key == 't' && demo->IsMultiThreadingSupported()) {
-				demo->ToggleMultiThreading();
+				multiThreadingActive = !multiThreadingActive;
+				demo->SetMultiThreading(multiThreadingActive);
 			} else if (key == 'b') {
 				StartBenchmark();
 			}

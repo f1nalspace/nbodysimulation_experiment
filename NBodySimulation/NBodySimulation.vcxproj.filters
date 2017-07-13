@@ -20,6 +20,7 @@
     <ClInclude Include="base.h" />
     <ClInclude Include="pseudorandom.h" />
     <ClInclude Include="utils.h" />
+    <ClInclude Include="chart.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="demo2.cpp" />

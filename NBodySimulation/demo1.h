@@ -204,6 +204,7 @@ namespace Demo1 {
 		SPHStatistics _stats;
 
 		Vec2f _gravity;
+		Vec2f _externalForce;
 
 		std::vector<Particle *> _particles;
 		std::vector<ParticleRenderObject> _particleRenderObjects;
@@ -243,31 +244,34 @@ namespace Demo1 {
 		void Update(const float deltaTime);
 		void Render(const float worldToScreenScale);
 
-		inline size_t GetParticleCount() {
+		void AddExternalForces(const Vec2f &force);
+		void ClearExternalForce();
+
+		size_t GetParticleCount() {
 			return _particles.size();
 		}
-		inline void SetGravity(const Vec2f &gravity) {
+		void SetGravity(const Vec2f &gravity) {
 			_gravity = gravity;
 		}
-		inline const SPHParameters &GetParams() {
+		const SPHParameters &GetParams() {
 			return _params;
 		}
-		inline const SPHStatistics &GetStats() {
+		SPHStatistics &GetStats() {
 			return _stats;
 		}
-		inline void SetParams(const SPHParameters &params) {
+		void SetParams(const SPHParameters &params) {
 			_params = params;
 		}
-		inline void ToggleMultiThreading() {
-			_isMultiThreading = !_isMultiThreading;
+		void SetMultiThreading(const bool value) {
+			_isMultiThreading = value;
 		}
-		inline bool IsMultiThreadingSupported() {
+		bool IsMultiThreadingSupported() {
 			return true;
 		}
-		inline bool IsMultiThreading() {
+		bool IsMultiThreading() {
 			return _isMultiThreading;
 		}
-		inline size_t GetWorkerThreadCount() {
+		size_t GetWorkerThreadCount() {
 			return _workerPool->GetThreadCount();
 		}
 	};

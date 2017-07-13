@@ -27,6 +27,14 @@ namespace Demo2 {
 		}
 	}
 
+	void ParticleSimulation::AddExternalForces(const Vec2f &force) {
+		_externalForce += force;
+	}
+
+	void ParticleSimulation::ClearExternalForce() {
+		_externalForce = Vec2f(0.0f);
+	}
+
 	void ParticleSimulation::InsertParticleIntoGrid(Particle &particle, const size_t particleIndex) {
 		Vec2f position = particle.curPosition;
 		Vec2i cellIndex = SPHComputeCellIndex(position);
@@ -235,7 +243,6 @@ namespace Demo2 {
 
 	void ParticleSimulation::Update(const float deltaTime) {
 		const float invDt = 1.0f / deltaTime;
-		const float nanosToMilliseconds = 1.0f / 1000000;
 		const bool useMultiThreading = _isMultiThreading;
 
 		// Emitters
@@ -254,7 +261,7 @@ namespace Demo2 {
 			auto startClock = std::chrono::high_resolution_clock::now();
 			for (size_t particleIndex = 0; particleIndex < _particles.size(); ++particleIndex) {
 				Particle &particle = _particles[particleIndex];
-				particle.acceleration += _gravity;
+				particle.acceleration += _gravity + _externalForce;
 				particle.velocity += particle.acceleration * deltaTime;
 				particle.acceleration = Vec2f();
 			}

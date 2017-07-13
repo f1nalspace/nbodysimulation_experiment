@@ -287,7 +287,6 @@ namespace Demo4 {
 
 	void ParticleSimulation::Update(const float deltaTime) {
 		const float invDt = 1.0f / deltaTime;
-		const float nanosToMilliseconds = 1.0f / 1000000;
 		const bool useMultiThreading = isMultiThreading;
 
 		// Emitters
@@ -306,7 +305,7 @@ namespace Demo4 {
 			auto startClock = std::chrono::high_resolution_clock::now();
 			for (size_t particleIndex = 0; particleIndex < particleCount; ++particleIndex) {
 				ParticleData *dataContainer = &particleDatas[particleIndex];
-				dataContainer->acceleration += gravity;
+				dataContainer->acceleration += gravity + externalForce;
 				dataContainer->velocity += dataContainer->acceleration * deltaTime;
 				dataContainer->acceleration = Vec2f();
 			}

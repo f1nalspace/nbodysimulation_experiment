@@ -137,6 +137,7 @@ namespace Demo3 {
 		SPHStatistics stats;
 
 		Vec2f gravity;
+		Vec2f externalForce;
 
 		std::vector<Particle> particles;
 
@@ -178,6 +179,13 @@ namespace Demo3 {
 		void Update(const float deltaTime);
 		void Render(const float worldToScreenScale);
 
+		inline void AddExternalForces(const Vec2f &force) {
+			externalForce += force;
+		}
+		inline void ClearExternalForce() {
+			externalForce = Vec2f(0,0);
+		}
+
 		inline void SetGravity(const Vec2f &gravity) {
 			this->gravity = gravity;
 		}
@@ -185,7 +193,7 @@ namespace Demo3 {
 		inline const SPHParameters &GetParams() {
 			return params;
 		}
-		inline const SPHStatistics &GetStats() {
+		inline SPHStatistics &GetStats() {
 			return stats;
 		}
 		inline void SetParams(const SPHParameters &params) {
@@ -196,8 +204,8 @@ namespace Demo3 {
 			return particles.size();
 		}
 
-		inline void ToggleMultiThreading() {
-			_isMultiThreading = !_isMultiThreading;
+		inline void SetMultiThreading(const bool value) {
+			_isMultiThreading = value;
 		}
 		inline bool IsMultiThreadingSupported() {
 			return true;
