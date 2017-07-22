@@ -61,11 +61,12 @@ void DemoApplication::Init() {
 
 	// @TODO: The font file will only work in windows!
 	uint32_t charRange[2] = { 33, 127 };
-	uint32_t atlasSize[2] = { 512, 512 };
+	uint32_t atlasSize[2] = { 512, 256 };
 	bool isPremultiplied = false;
 	bool isTopDown = true;
-	osdFont = LoadFont("C:/Windows/Fonts/arial.ttf.", 0, 50.0f, charRange[0], charRange[1], atlasSize[0], atlasSize[1]);
-	chartFont = LoadFont("C:/Windows/Fonts/arial.ttf", 0, 24.0f, charRange[0], charRange[1], atlasSize[0], atlasSize[1]);
+	char *fontFile = "C:/Windows/Fonts/arial.ttf.";
+	osdFont = LoadFont(fontFile, 0, 50.0f, charRange[0], charRange[1], atlasSize[0], atlasSize[1]);
+	chartFont = LoadFont(fontFile, 0, 24.0f, charRange[0], charRange[1], atlasSize[0], atlasSize[1]);
 	Render::AllocateTexture(commandBuffer, osdFont.atlasWidth, osdFont.atlasHeight, 1, osdFont.atlasAlphaBitmap, isTopDown, isPremultiplied, &osdFontTexture);
 	Render::AllocateTexture(commandBuffer, chartFont.atlasWidth, chartFont.atlasHeight, 1, chartFont.atlasAlphaBitmap, isTopDown, isPremultiplied, &chartFontTexture);
 
