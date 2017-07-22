@@ -86,27 +86,16 @@ static void ResizeFromGLUT(int width, int height) {
 	globalApp->Resize(width, height);
 }
 
-#define ENABLE_TEXCOORDARRAY 0
-#define ENABLE_DRAWELEMENTS 0
-#define ENABLE_COLORARRAY 1
-#define ENABLE_TEXTURES 1
-
 static void OpenGLPopVertexIndexArray(std::stack<Render::VertexIndexArrayHeader *> &stack) {
 	if (stack.size() > 0) {
 		Render::VertexIndexArrayHeader *header = stack.top();
 		stack.pop();
-
-#if ENABLE_COLORARRAY
 		if (header->colors != nullptr) {
 			glDisableClientState(GL_COLOR_ARRAY);
 		}
-#endif
-
-#if ENABLE_TEXCOORDARRAY
 		if (header->texcoords != nullptr) {
 			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		}
-#endif
 		glDisableClientState(GL_VERTEX_ARRAY);
 	}
 }
@@ -115,25 +104,18 @@ static void OpenGLPushVertexIndexArray(std::stack<Render::VertexIndexArrayHeader
 	GLsizei vertexStride = (GLsizei)header->vertexStride;
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(2, GL_FLOAT, vertexStride, header->vertices);
-
-#if ENABLE_TEXCOORDARRAY
 	if (header->texcoords != nullptr) {
 		assert(header->texcoords != header->vertices);
 		GLsizei texcoordStride = (GLsizei)header->texcoordStride;
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glVertexPointer(2, GL_FLOAT, texcoordStride, header->texcoords);
+		glTexCoordPointer(2, GL_FLOAT, texcoordStride, header->texcoords);
 	}
-#endif
-
-#if ENABLE_COLORARRAY
 	if (header->colors != nullptr) {
 		assert(header->colors != header->vertices);
 		GLsizei colorStride = (GLsizei)header->colorStride;
 		glEnableClientState(GL_COLOR_ARRAY);
 		glColorPointer(4, GL_FLOAT, colorStride, header->colors);
 	}
-#endif
-
 	stack.push(header);
 }
 
@@ -216,6 +198,7 @@ static void OpenGLAllocateTexture(Render::CommandBuffer *commandBuffer, Render::
 	glGenTextures(1, &textureHandle);
 	glBindTexture(GL_TEXTURE_2D, textureHandle);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, allocate.width, allocate.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texturePixelsRGBA);
+	// @TODO: Support for multiple filters and wrap mode
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
@@ -449,77 +432,36 @@ static void OpenGLDrawCommandBuffer(Render::CommandBuffer *commandBuffer) {
 					} break;
 				}
 
-#if ENABLE_TEXTURES
 				if (vertexIndexArrayDraw->texture != nullptr) {
 					GLuint textureId = PointerToValue<GLuint>(vertexIndexArrayDraw->texture);
+					// @TODO: Dont want to enable blending here always, use attributes for that!
 					glEnable(GL_BLEND);
 					glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 					glEnable(GL_TEXTURE_2D);
 					glBindTexture(GL_TEXTURE_2D, textureId);
 				}
-#endif
 
 				if (commandHeader->type == Render::CommandType::VerticesDraw) {
 					glDrawArrays(primitiveType, 0, (GLsizei)vertexIndexArrayDraw->count);
 				} else {
 
-#if ENABLE_DRAWELEMENTS
 					size_t indexSize = vertexIndexArray->indexSize;
 					GLenum type = indexSize == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
 					glDrawElements(primitiveType, (GLsizei)vertexIndexArrayDraw->count, type, vertexIndexArray->indices);
-#else
-					assert(vertexIndexArray->indices != nullptr);
-					assert(vertexIndexArray->vertices != nullptr);
-					assert(vertexIndexArray->texcoords != nullptr);
-					assert(vertexIndexArray->colors != nullptr);
-					assert(primitiveType == GL_TRIANGLES);
-					uint32_t triangleCount = vertexIndexArrayDraw->count / 3;
-					for (uint32_t triangleIndex = 0; triangleIndex < triangleCount; ++triangleIndex) {
-						uint32_t index0 = *((uint32_t *)vertexIndexArray->indices + triangleIndex * 3 + 0);
-						uint32_t index1 = *((uint32_t *)vertexIndexArray->indices + triangleIndex * 3 + 1);
-						uint32_t index2 = *((uint32_t *)vertexIndexArray->indices + triangleIndex * 3 + 2);
-
-						Vec2f v0 = *(Vec2f *)((uint8_t *)vertexIndexArray->vertices + vertexIndexArray->vertexStride * index0);
-						Vec2f v1 = *(Vec2f *)((uint8_t *)vertexIndexArray->vertices + vertexIndexArray->vertexStride * index1);
-						Vec2f v2 = *(Vec2f *)((uint8_t *)vertexIndexArray->vertices + vertexIndexArray->vertexStride * index2);
-
-						Vec2f t0 = *(Vec2f *)((uint8_t *)vertexIndexArray->texcoords + vertexIndexArray->texcoordStride * index0);
-						Vec2f t1 = *(Vec2f *)((uint8_t *)vertexIndexArray->texcoords + vertexIndexArray->texcoordStride * index1);
-						Vec2f t2 = *(Vec2f *)((uint8_t *)vertexIndexArray->texcoords + vertexIndexArray->texcoordStride * index2);
-
-						Vec4f c0 = *(Vec4f *)((uint8_t *)vertexIndexArray->colors + vertexIndexArray->colorStride * index0);
-						Vec4f c1 = *(Vec4f *)((uint8_t *)vertexIndexArray->colors + vertexIndexArray->colorStride * index1);
-						Vec4f c2 = *(Vec4f *)((uint8_t *)vertexIndexArray->colors + vertexIndexArray->colorStride * index2);
-
-						glBegin(primitiveType);
-						glColor4fv(&c0.m[0]);
-						glTexCoord2fv(&t0.m[0]);
-						glVertex2fv(&v0.m[0]);
-						glColor4fv(&c1.m[0]);
-						glTexCoord2fv(&t1.m[0]);
-						glVertex2fv(&v1.m[0]);
-						glColor4fv(&c2.m[0]);
-						glTexCoord2fv(&t2.m[0]);
-						glVertex2fv(&v2.m[0]);
-						glEnd();
-					}
-#endif
-
 				}
-#if ENABLE_TEXTURES
+
 				if (vertexIndexArrayDraw->texture != nullptr) {
 					glBindTexture(GL_TEXTURE_2D, 0);
 					glDisable(GL_TEXTURE_2D);
 					glDisable(GL_BLEND);
 				}
-#endif
 
 				if (vertexIndexArrayDraw->drawType == Render::PrimitiveType::Points) {
 					glPointSize(1.0f);
 				}
 			} break;
 		}
-		
+
 		OpenGLCheckError();
 
 		commandAt += commandHeader->dataSize;
