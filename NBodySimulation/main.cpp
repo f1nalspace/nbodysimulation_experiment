@@ -31,6 +31,8 @@ Notes:
 
 Todo:
 
+- Fix crash when using glDrawElements in combination of glTexcoordPointer (VerticesDraw command type)
+
 - Replace GLUT with FPL
 - Migrate all GUI/Text rendering to imGUI
 - External particle forces
