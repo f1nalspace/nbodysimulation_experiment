@@ -170,10 +170,12 @@
     <ClInclude Include="demo2.h" />
     <ClInclude Include="demo3.h" />
     <ClInclude Include="demo4.h" />
+    <ClInclude Include="font.h" />
+    <ClInclude Include="memory.h" />
     <ClInclude Include="pseudorandom.h" />
     <ClInclude Include="render.h" />
     <ClInclude Include="sph.h" />
-    <ClInclude Include="threadpool.h" />
+    <ClInclude Include="threading.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="vecmath.h" />
   </ItemGroup>

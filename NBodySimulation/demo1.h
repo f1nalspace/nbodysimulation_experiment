@@ -9,8 +9,9 @@
 
 #include "vecmath.h"
 #include "sph.h"
-#include "threadpool.h"
+#include "threading.h"
 #include "base.h"
+#include "render.h"
 
 namespace Demo1 {
 	const char *kDemoName = "Demo 1";
@@ -115,8 +116,8 @@ namespace Demo1 {
 		Body(const BodyType type);
 		virtual ~Body();
 		BodyType GetType();
-		virtual void SolveCollision(Particle *particle);
-		virtual void Render();
+		virtual void SolveCollision(Particle *particle) = 0;
+		virtual void Render(Render::CommandBuffer *commandBuffer) = 0;
 	};
 
 	class Plane : public Body {
@@ -128,7 +129,7 @@ namespace Demo1 {
 		const Vec2f &GetNormal();
 		float GetDistance();
 		void SolveCollision(Particle *particle);
-		void Render();
+		void Render(Render::CommandBuffer *commandBuffer);
 	};
 
 	class Circle : public Body {
@@ -140,7 +141,7 @@ namespace Demo1 {
 		const Vec2f &GetPosition();
 		float GetRadius();
 		void SolveCollision(Particle *particle);
-		void Render();
+		void Render(Render::CommandBuffer *commandBuffer);
 	};
 
 	class LineSegment : public Body {
@@ -151,7 +152,7 @@ namespace Demo1 {
 		const Vec2f &GetA();
 		const Vec2f &GetB();
 		void SolveCollision(Particle *particle);
-		void Render();
+		void Render(Render::CommandBuffer *commandBuffer);
 	};
 
 	class Poly : public Body {
@@ -162,7 +163,7 @@ namespace Demo1 {
 		const size_t GetVertexCount();
 		const Vec2f &GetVertex(size_t index);
 		void SolveCollision(Particle *particle);
-		void Render();
+		void Render(Render::CommandBuffer *commandBuffer);
 	};
 
 	class ParticleEmitter {
@@ -190,7 +191,7 @@ namespace Demo1 {
 		void SetTotalElapsed(const float totalElapsed);
 		bool GetIsActive();
 		void SetIsActive(const bool isActive);
-		void Render();
+		void Render(Render::CommandBuffer *commandBuffer);
 	};
 
 	struct ParticleRenderObject {
@@ -242,7 +243,7 @@ namespace Demo1 {
 		void AddEmitter(const Vec2f &position, const Vec2f &direction, const float radius, const float speed, const float rate, const float duration);
 
 		void Update(const float deltaTime);
-		void Render(const float worldToScreenScale);
+		void Render(Render::CommandBuffer *commandBuffer, const float worldToScreenScale);
 
 		void AddExternalForces(const Vec2f &force);
 		void ClearExternalForce();

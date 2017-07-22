@@ -3,7 +3,6 @@
 #ifndef APP_IMPLEMENTATION
 #define APP_IMPLEMENTATION
 
-#include <GL/glew.h>
 #include <filesystem>
 #include <iostream>
 #include <fstream>
@@ -11,6 +10,7 @@
 #include "sph.h"
 #include "pseudorandom.h"
 #include "chart.h"
+#include "font.h"
 
 #include "demo1.cpp"
 #include "demo2.cpp"
@@ -26,9 +26,11 @@ Window::Window() :
 
 Application::Application() {
 	window = new Window();
+	commandBuffer = new Render::CommandBuffer();
 }
 
 Application::~Application() {
+	delete commandBuffer;
 	delete window;
 }
 
@@ -47,18 +49,32 @@ DemoApplication::DemoApplication() :
 	demo(nullptr) {
 
 	demoStats.reserve(kDemoCount);
-	LoadDemo(demoIndex);
-
 	benchmarkActive = false;
 	benchmarkDone = false;
 	activeBenchmarkIteration = nullptr;
 	benchmarkFrameCount = 0;
 	benchmarkIterations.reserve(kBenchmarkIterationCount);
+}
+
+void DemoApplication::Init() {
+	LoadDemo(demoIndex);
+
+	// @TODO: The font file will only work in windows!
+	uint32_t charRange[2] = { 33, 127 };
+	uint32_t atlasSize[2] = { 512, 512 };
+	bool isPremultiplied = false;
+	bool isTopDown = true;
+	osdFont = LoadFont("C:/Windows/Fonts/arial.ttf.", 0, 50.0f, charRange[0], charRange[1], atlasSize[0], atlasSize[1]);
+	chartFont = LoadFont("C:/Windows/Fonts/arial.ttf", 0, 24.0f, charRange[0], charRange[1], atlasSize[0], atlasSize[1]);
+	Render::AllocateTexture(commandBuffer, osdFont.atlasWidth, osdFont.atlasHeight, 1, osdFont.atlasAlphaBitmap, isTopDown, isPremultiplied, &osdFontTexture);
+	Render::AllocateTexture(commandBuffer, chartFont.atlasWidth, chartFont.atlasHeight, 1, chartFont.atlasAlphaBitmap, isTopDown, isPremultiplied, &chartFontTexture);
 
 	//StartBenchmark();
 }
 
 DemoApplication::~DemoApplication() {
+	ReleaseFont(&chartFont);
+	ReleaseFont(&osdFont);
 	delete demo;
 }
 
@@ -137,8 +153,12 @@ void DemoApplication::PushDemoStatistics() {
 	demoStats.push_back(demoStat);
 }
 
-void DemoApplication::RenderBenchmark(OSDState *osdState, const float width, const float height) {
+void DemoApplication::RenderBenchmark(OSDState *osdState, const float left, float bottom, const float width, const float height) {
 	std::string processorName = GetProcessorName();
+
+	Font *font = &chartFont;
+	Render::TextureHandle fontTexture = chartFontTexture;
+	float fontHeight = 16.0f;
 
 	Chart chart = Chart();
 	chart.axisFormat = "%.2f ms";
@@ -171,10 +191,9 @@ void DemoApplication::RenderBenchmark(OSDState *osdState, const float width, con
 		chart.AddSeries(series);
 	}
 
-	float viewport[4] = {0.0f, 0.0f, width, height - (osdState->fontHeight * 2.0f)};
-	chart.RenderBars(viewport, osdState->font, (float)osdState->fontHeight);
+	float viewport[4] = { 0.0f, 0.0f, width, height - (fontHeight * 2.0f) };
+	chart.RenderBars(commandBuffer, viewport, font, fontTexture, (float)fontHeight);
 
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	char osdBuffer[256];
 	DemoStatistics *firstDemoStat = &demoStats[0];
 	sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Benchmark done, Scenario: %llu, Frames: %llu, Iterations: %llu", (firstDemoStat->scenarioIndex + 1), firstDemoStat->frameCount, firstDemoStat->iterationCount);
@@ -183,7 +202,16 @@ void DemoApplication::RenderBenchmark(OSDState *osdState, const float width, con
 	DrawOSDLine(osdState, osdBuffer);
 }
 
+void DemoApplication::DrawOSDLine(OSDState *osdState, const char *str) {
+	Render::PushText(commandBuffer, Vec2f(osdState->x, osdState->y), str, osdState->font, osdState->texture, osdState->fontHeight, Vec4f(1, 1, 1, 1));
+	osdState->y -= osdState->fontHeight;
+};
+
 void DemoApplication::UpdateAndRender(const float frameTime, const uint64_t cycles) {
+	int w = window->width;
+	int h = window->height;
+	Render::PushViewport(commandBuffer, 0, 0, w, h);
+
 	if (simulationActive) {
 		externalForcesApplying = false;
 
@@ -241,39 +269,30 @@ void DemoApplication::UpdateAndRender(const float frameTime, const uint64_t cycl
 	float top = kSPHBoundaryHalfHeight;
 	float bottom = -kSPHBoundaryHalfHeight;
 
-	int w = window->width;
-	int h = window->height;
-	glViewport(0, 0, w, h);
+	Render::PushOrthoProjection(commandBuffer, left, right, bottom, top, 0.0f, 1.0f);
 
-	float worldToScreenScale = (float)w / kSPHBoundaryWidth;
-
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(left, right, bottom, top, 0.0f, 1.0f);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	Render::PushClear(commandBuffer, true, false, Vec4f(0.0f, 0.0f, 0.0f, 1.0f));
 
 	if (!benchmarkDone) {
-		demo->Render(worldToScreenScale);
+		float worldToScreenScale = (float)w / kSPHBoundaryWidth;
+		demo->Render(commandBuffer, worldToScreenScale);
 	}
 
+	Render::PushOrthoProjection(commandBuffer, 0, (float)w, 0, (float)h, 0.0f, 1.0f);
+
 	char osdBuffer[256];
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0, w, 0, h, 0.0f, 1.0f);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
 
 	// OSD
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	OSDState osdState = CreateOSD(GLUT_BITMAP_8_BY_13);
-	osdState.charY = h - osdState.fontHeight;
+	OSDState osdState = {};
+	osdState.fontHeight = 16.0f;
+	osdState.x = 0;
+	osdState.y = (float)h - osdState.fontHeight;
+	osdState.texture = osdFontTexture;
+	osdState.font = &osdFont;
 
 	if (!benchmarkActive) {
 		if (benchmarkDone && (demoStats.size() > 0)) {
-			RenderBenchmark(&osdState, (float)w, (float)h);
+			RenderBenchmark(&osdState, 0.0f, 0.0f, (float)w, (float)h);
 		} else {
 			size_t scenarioCount = ArrayCount(SPHScenarios);
 			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Scenario: [%llu / %llu] %s (Space)", (activeScenarioIndex + 1), scenarioCount, activeScenarioName.c_str());
@@ -332,10 +351,10 @@ void DemoApplication::UpdateAndRender(const float frameTime, const uint64_t cycl
 
 		const char *bigText = "Benchmarking";
 		float bigTextSize = 30.0f;
-		float bigTextWidth = GetStrokeTextWidth(bigText, bigTextSize);
+		float bigTextWidth = GetTextWidth(bigText, (uint32_t)strlen(bigText), &osdFont, bigTextSize);
 		float bigTextX = w * 0.5f - bigTextWidth * 0.5f;
 		float bigTextY = h * 0.5f - bigTextSize * 0.5f;
-		RenderStrokeText(bigTextX, h * 0.5f, bigText, Vec4f(1, 1, 1, 1), bigTextSize, 2.0f);
+		Render::PushText(commandBuffer, Vec2f(bigTextX, h * 0.5f), bigText, &osdFont, osdFontTexture, bigTextSize, Vec4f(1, 1, 1, 1));
 
 		float progressWidth = bigTextWidth;
 		float progressHeight = bigTextSize * 0.5f;
@@ -343,8 +362,8 @@ void DemoApplication::UpdateAndRender(const float frameTime, const uint64_t cycl
 		float progressBottom = bigTextY - progressHeight;
 		size_t totalFrames = kBenchmarkFrameCount * kBenchmarkIterationCount * kDemoCount;
 		float framesPercentage = benchmarkFrameCount / (float)totalFrames;
-		FillRectangle(Vec2f(progressLeft, progressBottom), Vec2f(progressWidth * framesPercentage, progressHeight), Vec4f(0.1f, 0.1f, 0.6f, 1));
-		DrawRectangle(Vec2f(progressLeft, progressBottom), Vec2f(progressWidth, progressHeight), Vec4f(1, 1, 1, 1), 2.0f);
+		Render::PushRectangle(commandBuffer, Vec2f(progressLeft, progressBottom), Vec2f(progressWidth * framesPercentage, progressHeight), Vec4f(0.1f, 0.1f, 0.6f, 1), true);
+		Render::PushRectangle(commandBuffer, Vec2f(progressLeft, progressBottom), Vec2f(progressWidth, progressHeight), Vec4f(1, 1, 1, 1), false, 2.0f);
 	}
 }
 

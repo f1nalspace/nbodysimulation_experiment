@@ -9,8 +9,9 @@
 
 #include "vecmath.h"
 #include "sph.h"
-#include "threadpool.h"
+#include "threading.h"
 #include "base.h"
+#include "render.h"
 
 namespace Demo2 {
 	const char *kDemoName = "Demo 2";
@@ -54,7 +55,7 @@ namespace Demo2 {
 		virtual ~Body() {
 		}
 
-		virtual void Render() {
+		virtual void Render(Render::CommandBuffer *commandBuffer) {
 		}
 
 		virtual void SolveCollision(Particle &particle) {
@@ -72,7 +73,7 @@ namespace Demo2 {
 			this->distance = distance;
 		}
 
-		void Render();
+		void Render(Render::CommandBuffer *commandBuffer);
 
 		void SolveCollision(Particle &particle);
 	};
@@ -90,7 +91,7 @@ namespace Demo2 {
 
 		void SolveCollision(Particle &particle);
 
-		void Render();
+		void Render(Render::CommandBuffer *commandBuffer);
 	};
 
 	class LineSegment : public Body {
@@ -105,7 +106,7 @@ namespace Demo2 {
 
 		void SolveCollision(Particle &particle);
 
-		void Render();
+		void Render(Render::CommandBuffer *commandBuffer);
 	};
 
 	class Poly : public Body {
@@ -117,7 +118,7 @@ namespace Demo2 {
 			this->verts = verts;
 		}
 
-		void Render();
+		void Render(Render::CommandBuffer *commandBuffer);
 
 		void SolveCollision(Particle &particle);
 	};
@@ -153,7 +154,7 @@ namespace Demo2 {
 			this->isActive = true;
 		}
 
-		void Render();
+		void Render(Render::CommandBuffer *commandBuffer);
 	};
 
 	class ParticleSimulation : public BaseSimulation {
@@ -202,7 +203,7 @@ namespace Demo2 {
 		void AddEmitter(const Vec2f &position, const Vec2f &direction, const float radius, const float speed, const float rate, const float duration);
 
 		void Update(const float deltaTime);
-		void Render(const float worldToScreenScale);
+		void Render(Render::CommandBuffer *commandBuffer, const float worldToScreenScale);
 
 		void AddExternalForces(const Vec2f &force);
 		void ClearExternalForce();

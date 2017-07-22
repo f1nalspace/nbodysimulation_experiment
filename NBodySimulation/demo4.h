@@ -8,8 +8,9 @@
 
 #include "vecmath.h"
 #include "sph.h"
-#include "threadpool.h"
+#include "threading.h"
 #include "base.h"
+#include "render.h"
 
 namespace Demo4 {
 	const char *kDemoName = "Demo 4";
@@ -30,7 +31,7 @@ namespace Demo4 {
 		float distance;
 		uint8_t padding0[4];
 
-		void Render();
+		void Render(Render::CommandBuffer *commandBuffer);
 	};
 
 	struct Circle {
@@ -38,20 +39,20 @@ namespace Demo4 {
 		float radius;
 		uint8_t padding0[4];
 
-		void Render();
+		void Render(Render::CommandBuffer *commandBuffer);
 	};
 
 	struct LineSegment {
 		Vec2f a, b;
 
-		void Render();
+		void Render(Render::CommandBuffer *commandBuffer);
 	};
 
 	struct Poly {
 		Vec2f verts[kMaxScenarioPolygonCount];
 		size_t vertexCount;
 
-		void Render();
+		void Render(Render::CommandBuffer *commandBuffer);
 	};
 
 	struct Body {
@@ -130,7 +131,7 @@ namespace Demo4 {
 		float totalElapsed;
 		int32_t isActive;
 
-		void Render();
+		void Render(Render::CommandBuffer *commandBuffer);
 	};
 
 	struct ParticleSimulation : BaseSimulation {
@@ -183,7 +184,7 @@ namespace Demo4 {
 		void DeltaPositions(const int64_t startIndex, const int64_t endIndex, const float deltaTime);
 
 		void Update(const float deltaTime);
-		void Render(const float worldToScreenScale);
+		void Render(Render::CommandBuffer *commandBuffer, const float worldToScreenScale);
 
 		inline void AddExternalForces(const Vec2f &force) {
 			externalForce += force;

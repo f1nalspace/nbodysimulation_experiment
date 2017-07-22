@@ -10,6 +10,17 @@
 #define StaticAssert(e) extern char (*ct_assert(void)) [sizeof(char[1 - 2*!(e)])]
 #define ArrayCount(arr) (sizeof(arr) / sizeof((arr)[0]))
 
+template <typename T>
+inline T PointerToValue(void *ptr) {
+	T result = (T)(uintptr_t)(ptr);
+	return(result);
+}
+template <typename T>
+inline void *ValueToPointer(T value) {
+	void *result = (T *)(uintptr_t)(value);
+	return(result);
+}
+
 const float nanosToMilliseconds = 1.0f / 1000000;
 
 template <typename T>

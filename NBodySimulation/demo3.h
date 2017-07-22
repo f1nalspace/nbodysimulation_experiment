@@ -9,8 +9,9 @@
 
 #include "vecmath.h"
 #include "sph.h"
-#include "threadpool.h"
+#include "threading.h"
 #include "base.h"
+#include "render.h"
 
 namespace Demo3 {
 	const char *kDemoName = "Demo 3";
@@ -61,7 +62,7 @@ namespace Demo3 {
 			this->distance = distance;
 		}
 
-		void Render();
+		void Render(Render::CommandBuffer *commandBuffer);
 	};
 
 	struct Circle : public Body {
@@ -74,7 +75,7 @@ namespace Demo3 {
 			this->radius = radius;
 		}
 
-		void Render();
+		void Render(Render::CommandBuffer *commandBuffer);
 	};
 
 	struct LineSegment : public Body {
@@ -86,7 +87,7 @@ namespace Demo3 {
 			this->b = b;
 		}
 
-		void Render();
+		void Render(Render::CommandBuffer *commandBuffer);
 	};
 
 	struct Poly : public Body {
@@ -97,7 +98,7 @@ namespace Demo3 {
 			this->verts = verts;
 		}
 
-		void Render();
+		void Render(Render::CommandBuffer *commandBuffer);
 	};
 
 	struct Cell {
@@ -129,7 +130,7 @@ namespace Demo3 {
 			this->isActive = true;
 		}
 
-		void Render();
+		void Render(Render::CommandBuffer *commandBuffer);
 	};
 
 	struct ParticleSimulation : BaseSimulation {
@@ -177,7 +178,7 @@ namespace Demo3 {
 		void DeltaPositions(const size_t startIndex, const size_t endIndex, const float deltaTime);
 
 		void Update(const float deltaTime);
-		void Render(const float worldToScreenScale);
+		void Render(Render::CommandBuffer *commandBuffer, const float worldToScreenScale);
 
 		inline void AddExternalForces(const Vec2f &force) {
 			externalForce += force;

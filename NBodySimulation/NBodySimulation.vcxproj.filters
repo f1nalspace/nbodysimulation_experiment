@@ -16,11 +16,13 @@
     <ClInclude Include="render.h" />
     <ClInclude Include="demo1.cpp" />
     <ClInclude Include="app.cpp" />
-    <ClInclude Include="threadpool.h" />
     <ClInclude Include="base.h" />
     <ClInclude Include="pseudorandom.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="chart.h" />
+    <ClInclude Include="font.h" />
+    <ClInclude Include="threading.h" />
+    <ClInclude Include="memory.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="demo2.cpp" />

@@ -6,6 +6,7 @@
 
 #include "base.h"
 #include "render.h"
+#include "font.h"
 
 #include "demo1.h"
 #include "demo2.h"
@@ -16,7 +17,7 @@ const int kWindowWidth = 1280;
 const int kWindowHeight = 720;
 const char *kAppVersion = "1.1";
 
-#define VERY_SHORT_BENCHMARK 0
+#define VERY_SHORT_BENCHMARK 1
 
 #if !VERY_SHORT_BENCHMARK
 const size_t kBenchmarkFrameCount = 50;
@@ -49,6 +50,7 @@ struct Window {
 
 struct Application {
 	Window  *window;
+	Render::CommandBuffer *commandBuffer;
 
 	Application();
 	virtual ~Application();
@@ -57,9 +59,10 @@ struct Application {
 		return window;
 	}
 
-	virtual void KeyUp(unsigned char key) = 0;
-
 	void Resize(const int width, const int height);
+
+	virtual void Init() = 0;
+	virtual void KeyUp(unsigned char key) = 0;
 	virtual void UpdateAndRender(const float frametime, const uint64_t cycles) = 0;
 };
 
@@ -96,6 +99,14 @@ struct DemoStatistics {
 	FrameStatistics avg;
 };
 
+struct OSDState {
+	float x;
+	float y;
+	float fontHeight;
+	Font *font;
+	Render::TextureHandle texture;
+};
+
 struct DemoApplication : public Application {
 	std::string demoTitle;
 	bool benchmarkActive;
@@ -116,16 +127,24 @@ struct DemoApplication : public Application {
 	bool multiThreadingActive;
 	bool externalForcesApplying;
 
+	Font osdFont;
+	Render::TextureHandle osdFontTexture;
+	Font chartFont;
+	Render::TextureHandle chartFontTexture;
+
 	void LoadDemo(const size_t demoIndex);
 
 	void PushDemoStatistics();
 	void StartBenchmark();
 	void StopBenchmark();
 
-	void RenderBenchmark(OSDState *osdState, const float width, const float height);
+	void DrawOSDLine(OSDState *osdState, const char *str);
+
+	void RenderBenchmark(OSDState *osdState, const float left, float bottom, const float width, const float height);
 
 	DemoApplication();
 	~DemoApplication();
+	void Init();
 	void UpdateAndRender(const float frameTime, const uint64_t cycles);
 	void KeyUp(unsigned char key);
 	void KeyDown(unsigned char key);

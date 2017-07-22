@@ -239,7 +239,7 @@ struct SPHScenarioEmitter {
 	float radius;
 	// @NOTE: How fast the particles are moving initially
 	float speed;
-	// @NOTE: How fast the particles are emitter per second
+	// @NOTE: How fast the particles are emitted per second
 	float rate;
 	// @NOTE: Total duration in seconds
 	float duration;
@@ -681,14 +681,16 @@ force_inline void SPHSolvePolygonCollision(Vec2f *particlePosition, const size_t
 }
 
 force_inline Vec4f SPHGetParticleColor(const float restDensity, const float density, const float pressure, const Vec2f &velocity) {
-	Vec4f result = Vec4f(1, 1, 1, 1);
+	// @TODO: This is are totally wrong, when the default parameters are different!
 	float r = pressure / (-10.0f);
 	float g = density / (restDensity);
 	float b = Vec2Length(velocity) / 10.0f;
 
+	Vec4f result;
 	result.r = std::max(std::min(r, 1.0f), 0.0f);
 	result.g = std::max(std::min(g, 1.0f), 0.0f);
 	result.b = std::max(std::min(b, 1.0f), 0.0f);
+	result.a = 1.0f;
 	return(result);
 }
 

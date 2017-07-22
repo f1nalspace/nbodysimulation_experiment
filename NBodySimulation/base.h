@@ -3,6 +3,7 @@
 
 #include "vecmath.h"
 #include "sph.h"
+#include "render.h"
 
 class BaseSimulation {
 public:
@@ -21,7 +22,7 @@ public:
 	virtual void AddEmitter(const Vec2f &position, const Vec2f &direction, const float radius, const float speed, const float rate, const float duration) = 0;
 
 	virtual void Update(const float deltaTime) = 0;
-	virtual void Render(const float worldToScreenScale) = 0;
+	virtual void Render(Render::CommandBuffer *commandBuffer, const float worldToScreenScale) = 0;
 
 	virtual void AddExternalForces(const Vec2f &force) = 0;
 	virtual void ClearExternalForce() = 0;

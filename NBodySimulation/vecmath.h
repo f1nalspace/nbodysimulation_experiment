@@ -71,12 +71,92 @@ union Mat2f {
 	}
 };
 
-union Vec4f {
+union Vec3f {
 	struct {
-		float x, y, z, w;
+		float x, y, z;
 	};
 	struct {
-		float r, g, b, a;
+		float u, v, w;
+	};
+	struct {
+		float r, g, b;
+	};
+	struct {
+		Vec2f xy;
+		float ignored0;
+	};
+	struct {
+		float ignored1;
+		Vec2f yz;
+	};
+	struct {
+		Vec2f uv;
+		float ignored2;
+	};
+	struct {
+		float ignored3;
+		Vec2f vw;
+	};
+	float m[3];
+
+	Vec3f() {
+		x = y = z = 0.0f;
+	}
+
+	Vec3f(const float scalar) {
+		x = y = z = scalar;
+	}
+
+	Vec3f(const Vec3f &other) {
+		x = other.x;
+		y = other.y;
+		z = other.z;
+	}
+
+	Vec3f(const float initX, const float initY, const float initZ) {
+		x = initX;
+		y = initY;
+		z = initZ;
+	}
+};
+
+union Vec4f {
+	struct {
+		union {
+			Vec3f xyz;
+			struct {
+				float x, y, z;
+			};
+		};
+		float w;
+	};
+	struct {
+		union {
+			Vec3f rgb;
+			struct {
+				float r, g, b;
+			};
+		};
+		float a;
+	};
+	struct {
+		Vec3f xyz;
+		float w;
+	};
+	struct {
+		Vec2f xy;
+		float ignored0;
+		float ignored1;
+	};
+	struct {
+		float ignored2;
+		Vec2f yz;
+		float ignored3;
+	};
+	struct {
+		float ignored4;
+		float ignored5;
+		Vec2f zw;
 	};
 	float m[4];
 
@@ -249,9 +329,27 @@ inline Vec2f Vec2Lerp(const Vec2f &a, float t, const Vec2f &b) {
 }
 
 //
+// Vec3f
+//
+inline Vec3f operator*(float a, const Vec3f &b) {
+	Vec3f result;
+	result.x = a * b.x;
+	result.y = a * b.y;
+	result.z = a * b.z;
+	return(result);
+}
+inline Vec3f operator*(const Vec3f &a, float b) {
+	Vec3f result = b * a;
+	return(result);
+}
+inline Vec3f& operator*=(Vec3f &a, float value) {
+	a = value * a;
+	return(a);
+}
+
+//
 // Mat2f
 //
-
 inline Mat2f Mat2Identity() {
 	Mat2f result = Mat2f();
 	return (result);
@@ -323,12 +421,41 @@ const static Vec4f ColorBlue = Vec4f(0.0f, 0.0f, 1.0f, 1.0f);
 const static Vec4f ColorLightGray = Vec4f(0.3f, 0.3f, 0.3f, 1.0f);
 const static Vec4f ColorDarkGray = Vec4f(0.2f, 0.2f, 0.2f, 1.0f);
 
-#define RGBAToPixel(rgba) {((rgba) >> 0) & 0xFF, ((rgba) >> 8) & 0xFF, ((rgba) >> 16) & 0xFF, ((rgba) >> 24) & 0xFF}
+inline Pixel RGBA32ToPixel(const uint32_t rgba) {
+	Pixel result = { (rgba >> 0) & 0xFF, (rgba >> 8) & 0xFF, (rgba >> 16) & 0xFF, (rgba >> 24) & 0xFF };
+	return(result);
+}
+
+inline uint32_t RGBA32(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) {
+	uint32_t result = (a << 24) | (b << 16) | (g << 8) | (r << 0);
+	return(result);
+}
+
 const static float INV255 = 1.0f / 255.0f;
 
-inline Vec4f RGBAToLinear(uint32_t rgba) {
-	Pixel pixel = RGBAToPixel(rgba);
+inline Vec4f PixelToLinear(const Pixel &pixel) {
 	Vec4f result = Vec4f(pixel.r * INV255, pixel.g * INV255, pixel.b * INV255, pixel.a * INV255);
+	return(result);
+}
+
+inline Vec4f RGBA32ToLinear(const uint32_t rgba) {
+	Pixel pixel = RGBA32ToPixel(rgba);
+	Vec4f result = PixelToLinear(pixel);
+	return(result);
+}
+
+inline Vec4f AlphaToLinear(const uint8_t alpha) {
+	float a = alpha * INV255;
+	Vec4f result = Vec4f(1, 1, 1, a);
+	return(result);
+}
+
+inline uint32_t LinearToRGBA32(const Vec4f &linear) {
+	uint8_t r = (uint8_t)((linear.x * 255.0f) + 0.5f);
+	uint8_t g = (uint8_t)((linear.y * 255.0f) + 0.5f);
+	uint8_t b = (uint8_t)((linear.z * 255.0f) + 0.5f);
+	uint8_t a = (uint8_t)((linear.w * 255.0f) + 0.5f);
+	uint32_t result = RGBA32(r, g, b, a);
 	return(result);
 }
 

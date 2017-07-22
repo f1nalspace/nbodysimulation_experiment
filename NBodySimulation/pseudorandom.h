@@ -1599,7 +1599,7 @@ inline int32_t RandomBetweenInt(RandomSeries *series, int32_t min, int32_t max) 
 /* Returns a random color vector, each component between 0.0 and 1.0 */
 inline Vec4f RandomColor(RandomSeries *series) {
 	uint32_t rgba = RandomNextRGBA(series);
-	Vec4f result = RGBAToLinear(rgba);
+	Vec4f result = RGBA32ToLinear(rgba);
 	return(result);
 }
 

@@ -3,8 +3,6 @@
 #ifndef DEMO1_IMPLEMENTATION
 #define DEMO1_IMPLEMENTATION
 
-#include <GL/glew.h>
-
 #include <chrono>
 #include <algorithm>
 
@@ -490,15 +488,10 @@ namespace Demo1 {
 		}
 	}
 
-	void ParticleSimulation::Render(const float worldToScreenScale) {
+	void ParticleSimulation::Render(Render::CommandBuffer *commandBuffer, const float worldToScreenScale) {
 		// Domain
-		glColor4f(1.0f, 0.0f, 1.0f, 1.0f);
-		glBegin(GL_LINE_LOOP);
-		glVertex2f(kSPHBoundaryHalfWidth, kSPHBoundaryHalfHeight);
-		glVertex2f(-kSPHBoundaryHalfWidth, kSPHBoundaryHalfHeight);
-		glVertex2f(-kSPHBoundaryHalfWidth, -kSPHBoundaryHalfHeight);
-		glVertex2f(kSPHBoundaryHalfWidth, -kSPHBoundaryHalfHeight);
-		glEnd();
+		Vec4f domainColor = Vec4f(1.0f, 0.0f, 1.0f, 1.0f);
+		Render::PushRectangle(commandBuffer, Vec2f(-kSPHBoundaryHalfWidth, -kSPHBoundaryHalfHeight), Vec2f(kSPHBoundaryHalfWidth, kSPHBoundaryHalfHeight) * 2.0f, domainColor, false, 1.0f);
 
 		// Grid fill
 		const Vec2f innerSize = Vec2f(kSPHGridCellSize);
@@ -508,7 +501,7 @@ namespace Demo1 {
 				Vec2f innerP = kSPHGridOrigin + Vec2f((float)xIndexInner, (float)yIndexInner) * kSPHGridCellSize;
 				Cell *cell = _grid->GetCell(cellOffset);
 				if (cell != nullptr && cell->GetCount() > 0) {
-					FillRectangle(innerP, innerSize, ColorLightGray);
+					Render::PushRectangle(commandBuffer, innerP, innerSize, ColorLightGray, true);
 				}
 			}
 		}
@@ -517,18 +510,18 @@ namespace Demo1 {
 		for (int yIndex = 0; yIndex < kSPHGridCountY; ++yIndex) {
 			Vec2f startP = kSPHGridOrigin + Vec2f(0, (float)yIndex) * kSPHGridCellSize;
 			Vec2f endP = kSPHGridOrigin + Vec2f((float)kSPHGridCountX, (float)yIndex) * kSPHGridCellSize;
-			DrawLine(startP, endP, ColorDarkGray);
+			Render::PushLine(commandBuffer, startP, endP, ColorDarkGray, 1.0f);
 		}
 		for (int xIndex = 0; xIndex < kSPHGridCountX; ++xIndex) {
 			Vec2f startP = kSPHGridOrigin + Vec2f((float)xIndex, 0) * kSPHGridCellSize;
 			Vec2f endP = kSPHGridOrigin + Vec2f((float)xIndex, (float)kSPHGridCountY) * kSPHGridCellSize;
-			DrawLine(startP, endP, ColorDarkGray);
+			Render::PushLine(commandBuffer, startP, endP, ColorDarkGray, 1.0f);
 		}
 
 		// Bodies
 		for (int bodyIndex = 0; bodyIndex < _bodies.size(); ++bodyIndex) {
 			Body *body = _bodies[bodyIndex];
-			body->Render();
+			body->Render(commandBuffer);
 		}
 
 		// Particles
@@ -540,15 +533,12 @@ namespace Demo1 {
 				particleRenderObject->color = SPHGetParticleColor(_params.restDensity, particle->GetDensity(), particle->GetPressure(), particle->GetVelocity());
 			}
 			float pointSize = kSPHParticleRenderRadius * 2.0f * worldToScreenScale;
-			glPointSize(pointSize);
-			glEnableClientState(GL_VERTEX_ARRAY);
-			glVertexPointer(2, GL_FLOAT, sizeof(ParticleRenderObject), (void *)((uint8_t *)&_particleRenderObjects[0] + offsetof(ParticleRenderObject, pos)));
-			glEnableClientState(GL_COLOR_ARRAY);
-			glColorPointer(4, GL_FLOAT, sizeof(ParticleRenderObject), (void *)((uint8_t *)&_particleRenderObjects[0] + offsetof(ParticleRenderObject, color)));
-			glDrawArrays(GL_POINTS, 0, (int)_particles.size());
-			glDisableClientState(GL_COLOR_ARRAY);
-			glDisableClientState(GL_VERTEX_ARRAY);
-			glPointSize(1);
+			void *vertices = (void *)((uint8_t *)&_particleRenderObjects[0] + offsetof(ParticleRenderObject, pos));
+			void *colors = (void *)((uint8_t *)&_particleRenderObjects[0] + offsetof(ParticleRenderObject, color));
+			uint32_t particleCount = (uint32_t)_particles.size();
+			uint32_t vertexStride = sizeof(ParticleRenderObject);
+			Render::PushVertexIndexArrayHeader(commandBuffer, vertexStride, vertices, 0, nullptr, vertexStride, colors, 0, nullptr);
+			Render::PushVertexIndexArrayDraw(commandBuffer, Render::PrimitiveType::Points, particleCount, pointSize, nullptr, {}, false);
 		}
 	}
 
@@ -600,15 +590,13 @@ namespace Demo1 {
 		}
 	}
 
-	void Plane::Render() {
+	void Plane::Render(Render::CommandBuffer *commandBuffer) {
 		Vec2f p = _normal * _distance;
 		Vec2f t = Vec2f(_normal.y, -_normal.x);
 		Vec4f color = ColorBlue;
-		glColor4fv(&color.m[0]);
-		glBegin(GL_LINES);
-		glVertex2f(p.x + t.x * kSPHVisualPlaneLength, p.y + t.y * kSPHVisualPlaneLength);
-		glVertex2f(p.x - t.x * kSPHVisualPlaneLength, p.y - t.y * kSPHVisualPlaneLength);
-		glEnd();
+		Vec2f a = Vec2f(p.x + t.x * kSPHVisualPlaneLength, p.y + t.y * kSPHVisualPlaneLength);
+		Vec2f b = Vec2f(p.x - t.x * kSPHVisualPlaneLength, p.y - t.y * kSPHVisualPlaneLength);
+		Render::PushLine(commandBuffer, a, b, color, 1.0f);
 	}
 
 	Cell::Cell() {
@@ -720,12 +708,6 @@ namespace Demo1 {
 
 	}
 
-	void Body::Render() {
-	}
-
-	void Body::SolveCollision(Particle *particle) {
-	}
-
 	BodyType Body::GetType() {
 		return _type;
 	}
@@ -766,9 +748,9 @@ namespace Demo1 {
 		return _radius;
 	}
 
-	void Circle::Render() {
+	void Circle::Render(Render::CommandBuffer *commandBuffer) {
 		Vec4f color = ColorBlue;
-		DrawCircle(_pos, _radius, color);
+		Render::PushCircle(commandBuffer, _pos, _radius, color, 1.0f, false);
 	}
 
 	void Circle::SolveCollision(Particle *particle) {
@@ -798,13 +780,9 @@ namespace Demo1 {
 		particle->SetPosition(p);
 	}
 
-	void LineSegment::Render() {
+	void LineSegment::Render(Render::CommandBuffer *commandBuffer) {
 		Vec4f color = ColorBlue;
-		glColor4fv(&color.m[0]);
-		glBegin(GL_LINES);
-		glVertex2f(_a.x, _a.y);
-		glVertex2f(_b.x, _b.y);
-		glEnd();
+		Render::PushLine(commandBuffer, _a, _b, color, 1.0f);
 	}
 
 	// Poly
@@ -828,14 +806,9 @@ namespace Demo1 {
 		particle->SetPosition(p);
 	}
 
-	void Poly::Render() {
+	void Poly::Render(Render::CommandBuffer *commandBuffer) {
 		Vec4f color = ColorBlue;
-		glColor4fv(&color.m[0]);
-		glBegin(GL_LINE_LOOP);
-		for (size_t vertexIndex = 0; vertexIndex < _verts.size(); ++vertexIndex) {
-			glVertex2f(_verts[vertexIndex].x, _verts[vertexIndex].y);
-		}
-		glEnd();
+		Render::PushPolygonFrom(commandBuffer, &_verts[0], _verts.size(), color, false, 1.0f);
 	}
 }
 

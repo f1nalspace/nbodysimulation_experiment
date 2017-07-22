@@ -5,11 +5,11 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include <GL\glew.h>
 
 #include "vecmath.h"
 #include "render.h"
 #include "utils.h"
+#include "font.h"
 
 double GetNiceNumber(double range, bool roundIt) {
 	double exponent = floor(log10(range));
@@ -88,7 +88,7 @@ struct Chart {
 		this->sampleLabels.push_back(sampleLabel);
 	}
 
-	void RenderBars(const float viewportLBWH[4], void *font, const float fontHeight) {
+	void RenderBars(Render::CommandBuffer *commandBuffer, const float viewportLBWH[4], Font *font, Render::TextureHandle fontTexture, const float fontHeight) {
 		float viewportLeft = viewportLBWH[0];
 		float viewportBottom = viewportLBWH[1];
 		float viewportWidth = viewportLBWH[2];
@@ -134,7 +134,8 @@ struct Chart {
 
 		float axisMargin = 10;
 		std::string maxAxisLabel = StringFormat(axisFormat, (size_t)256, yAxis.max);
-		float yAxisWidth = GetTextWidth(maxAxisLabel.c_str(), font) + axisMargin;
+		float maxAxisTextWidth = GetTextWidth(maxAxisLabel.c_str(), (uint32_t)maxAxisLabel.size(), font, tickLabelFontHeight);
+		float yAxisWidth = maxAxisTextWidth + axisMargin;
 
 		float chartWidth = areaWidth - yAxisWidth;
 		float chartOriginX = areaLeft + yAxisWidth;
@@ -145,66 +146,34 @@ struct Chart {
 		float subSampleMargin = 5;
 
 		// Chart area
-		glColor4f(0.1f, 0.1f, 0.1f, 1);
-		glBegin(GL_QUADS);
-		glVertex2f(areaLeft, areaBottom);
-		glVertex2f(areaLeft + areaWidth, areaBottom);
-		glVertex2f(areaLeft + areaWidth, areaBottom + areaHeight);
-		glVertex2f(areaLeft, areaBottom + areaHeight);
-		glEnd();
+		Render::PushRectangle(commandBuffer, Vec2f(areaLeft, areaBottom), Vec2f(areaWidth, areaHeight), Vec4f(0.1f, 0.1f, 0.1f, 1.0f), true);
 
 		// Grid
 		Vec4f gridXLineColor = Vec4f(0.25f, 0.25f, 0.25f, 1);
 		Vec4f gridYLineColor = Vec4f(0.25f, 0.25f, 0.25f, 1);
-
-		glColor4fv(&gridXLineColor.m[0]);
-		glLineWidth(1);
-		glBegin(GL_LINES);
 		for (int sampleIndex = 1; sampleIndex < sampleCount; ++sampleIndex) {
-			glVertex2f(chartOriginX + (float)sampleIndex * sampleWidth, chartOriginY);
-			glVertex2f(chartOriginX + (float)sampleIndex * sampleWidth, chartOriginY + chartHeight);
+			Render::PushLine(commandBuffer, Vec2f(chartOriginX + (float)sampleIndex * sampleWidth, chartOriginY), Vec2f(chartOriginX + (float)sampleIndex * sampleWidth, chartOriginY + chartHeight), gridXLineColor, 1.0f);
 		}
-		glEnd();
-		glLineWidth(1);
 
-		glColor4fv(&gridYLineColor.m[0]);
-		glLineWidth(1);
-		glBegin(GL_LINES);
 		for (int tickIndex = 0; tickIndex <= tickCount; ++tickIndex) {
 			double tickValue = yAxis.min + yAxis.tickSpacing * (double)tickIndex;
 			float tickHeight = yAxis.MapValueToPosition(tickValue, chartHeight);
-			glVertex2f(chartOriginX, chartOriginY + tickHeight);
-			glVertex2f(chartOriginX + chartWidth, chartOriginY + tickHeight);
+			Render::PushLine(commandBuffer, Vec2f(chartOriginX, chartOriginY + tickHeight), Vec2f(chartOriginX + chartWidth, chartOriginY + tickHeight), gridYLineColor, 1.0f);
 		}
-		glEnd();
-		glLineWidth(1);
 
 		// Axis lines
 		float axisLineExtend = 10.0f;
 		Vec4f axisLineColor = Vec4f(0.65f, 0.65f, 0.65f, 1);
-		glColor4fv(&axisLineColor.m[0]);
-		glLineWidth(1);
-		glBegin(GL_LINES);
-		glVertex2f(chartOriginX - axisLineExtend, chartOriginY);
-		glVertex2f(chartOriginX + chartWidth, chartOriginY);
-		glVertex2f(chartOriginX, chartOriginY - axisLineExtend);
-		glVertex2f(chartOriginX, chartOriginY + chartHeight);
-		glEnd();
-		glLineWidth(1);
+		Render::PushLine(commandBuffer, Vec2f(chartOriginX - axisLineExtend, chartOriginY), Vec2f(chartOriginX + chartWidth, chartOriginY), axisLineColor, 1.0f);
+		Render::PushLine(commandBuffer, Vec2f(chartOriginX, chartOriginY - axisLineExtend), Vec2f(chartOriginX, chartOriginY + chartHeight), axisLineColor, 1.0f);
 
 		// Tick marks
 		Vec4f tickMarkLineColor = Vec4f(0.2f, 0.2f, 0.2f, 1);
-		glColor4fv(&tickMarkLineColor.m[0]);
-		glLineWidth(1);
-		glBegin(GL_LINES);
 		for (int tickIndex = 0; tickIndex <= tickCount; ++tickIndex) {
 			double tickValue = yAxis.min + yAxis.tickSpacing * (double)tickIndex;
 			float tickHeight = yAxis.MapValueToPosition(tickValue, chartHeight);
-			glVertex2f(chartOriginX, chartOriginY + tickHeight);
-			glVertex2f(chartOriginX - axisMargin, chartOriginY + tickHeight);
+			Render::PushLine(commandBuffer, Vec2f(chartOriginX, chartOriginY + tickHeight), Vec2f(chartOriginX - axisMargin, chartOriginY + tickHeight), tickMarkLineColor, 1.0f);
 		}
-		glEnd();
-		glLineWidth(1);
 
 		// Tick labels
 		Vec4f tickLabelColor = Vec4f(1.0f, 1.0f, 1.0f, 1);
@@ -212,10 +181,10 @@ struct Chart {
 			double tickValue = yAxis.min + yAxis.tickSpacing * (double)tickIndex;
 			float tickHeight = yAxis.MapValueToPosition(tickValue, chartHeight);
 			std::string tickLabel = StringFormat(axisFormat, 256, tickValue);
-			float tickLabelWidth = (float)GetTextWidth(tickLabel.c_str(), font);
+			float tickLabelWidth = GetTextWidth(tickLabel.c_str(), (uint32_t)tickLabel.size(), font, tickLabelFontHeight);
 			float tickY = chartOriginY + tickHeight - tickLabelFontHeight * 0.5f;
 			float tickX = chartOriginX - axisMargin - tickLabelWidth;
-			RenderText(tickX, tickY, tickLabel.c_str(), tickLabelColor, font);
+			Render::PushText(commandBuffer, Vec2f(tickX, tickY), tickLabel.c_str(), font, fontTexture, tickLabelFontHeight, tickLabelColor);
 		}
 
 		// Bars
@@ -231,17 +200,19 @@ struct Chart {
 				float sampleRight = sampleLeft + seriesBarWidth;
 				float sampleBottom = chartOriginY;
 				float sampleTop = chartOriginY + sampleHeight;
-				FillRectangle(Vec2f(sampleLeft, sampleBottom), Vec2f(abs(sampleRight - sampleLeft), abs(sampleBottom - sampleTop)), seriesColor);
+				Vec2f rectPos = Vec2f(sampleLeft, sampleBottom);
+				Vec2f rectSize = Vec2f(abs(sampleRight - sampleLeft), abs(sampleBottom - sampleTop));
+				Render::PushRectangle(commandBuffer, rectPos, rectSize, seriesColor, true);
 			}
 		}
 
 		// Sample labels
 		for (int sampleIndex = 0; sampleIndex < sampleCount; ++sampleIndex) {
 			const char *sampleLabel = sampleLabels[sampleIndex].c_str();
-			float textWidth = (float)GetTextWidth(sampleLabel, font);
+			float textWidth = (float)GetTextWidth(sampleLabel, (uint32_t)strlen(sampleLabel), font, sampleLabelFontHeight);
 			float xLeft = chartOriginX + (float)sampleIndex * sampleWidth + sampleWidth * 0.5f - textWidth * 0.5f;
 			float yMiddle = chartOriginY - sampleLabelFontHeight - sampleAxisMargin;
-			RenderText(xLeft, yMiddle, sampleLabel, Vec4f(1, 1, 1, 1), font);
+			Render::PushText(commandBuffer, Vec2f(xLeft, yMiddle), sampleLabel, font, fontTexture, sampleLabelFontHeight, Vec4f(1, 1, 1, 1));
 		}
 
 		// Legend
@@ -251,13 +222,13 @@ struct Chart {
 			ChartSeries *series = &seriesItems[seriesIndex];
 			Vec4f legendColor = series->color;
 
-			FillRectangle(Vec2f(legendCurLeft, legendBottom), Vec2f(legendBulletSize, legendBulletSize), legendColor);
+			Render::PushRectangle(commandBuffer, Vec2f(legendCurLeft, legendBottom), Vec2f(legendBulletSize, legendBulletSize), legendColor, true);
 			legendCurLeft += legendBulletSize + legendBulletPadding;
 
 			const char *legendLabel = series->title.c_str();
-			float labelWidth = (float)GetTextWidth(legendLabel, font);
+			float labelWidth = (float)GetTextWidth(legendLabel, (uint32_t)strlen(legendLabel), font, legendFontHeight);
 			float labelY = legendBottom - legendFontHeight * 0.5f + legendBulletSize * 0.5f;
-			RenderText(legendCurLeft, labelY, legendLabel, Vec4f(1, 1, 1, 1), font);
+			Render::PushText(commandBuffer, Vec2f(legendCurLeft, labelY), legendLabel, font, fontTexture, legendFontHeight, Vec4f(1, 1, 1, 1));
 			legendCurLeft += labelWidth + legendLabelPadding;
 		}
 	}
