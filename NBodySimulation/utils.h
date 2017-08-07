@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <algorithm>
 #include <intrin.h>
+#include <varargs.h>
 
 #define force_inline __forceinline
 #define StaticAssert(e) extern char (*ct_assert(void)) [sizeof(char[1 - 2*!(e)])]

@@ -1,6 +1,7 @@
 #ifndef FONT_H
 #define FONT_H
 
+#include <final_platform_layer.h>
 #include <stdint.h>
 #include <malloc.h>
 #include <stdio.h>
@@ -94,14 +95,14 @@ inline float GetTextWidth(const char *text, const uint32_t textLen, Font *font, 
 
 static uint8_t *LoadFileContent(const char *filename) {
 	uint8_t *result = nullptr;
-	FILE *handle = fopen(filename, "rb");
-	if (handle != NULL) {
-		fseek(handle, 0, SEEK_END);
-		long fileSize = ftell(handle);
-		fseek(handle, 0, SEEK_SET);
+	fpl_FileHandle handle = fpl_OpenBinaryFile(filename);
+	if (handle.isValid) {
+		fpl_SetFilePosition32(&handle, 0, fpl_FilePositionMode_End);
+		uint32_t fileSize = fpl_GetFilePosition32(&handle);
+		fpl_SetFilePosition32(&handle, 0, fpl_FilePositionMode_Beginning);
 		result = (uint8_t *)malloc(fileSize);
-		fread(result, 1, fileSize, handle);
-		fclose(handle);
+		fpl_ReadFileBlock32(&handle, fileSize, result, fileSize);
+		fpl_CloseFile(&handle);
 	}
 	return(result);
 }

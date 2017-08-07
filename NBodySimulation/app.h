@@ -1,6 +1,7 @@
 #ifndef APP_H
 #define APP_H
 
+#include <final_platform_layer.h>
 #include <string>
 #include <vector>
 

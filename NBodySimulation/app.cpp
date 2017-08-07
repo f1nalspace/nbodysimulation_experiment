@@ -418,9 +418,9 @@ void DemoApplication::StartBenchmark() {
 
 void DemoApplication::StopBenchmark() {
 	benchmarkFrameCount = 0;
-	simulationActive = false;
+	simulationActive = true;
 	benchmarkActive = false;
-	benchmarkDone = true;
+	benchmarkDone = false;
 	activeBenchmarkIteration = nullptr;
 }
 
@@ -430,18 +430,18 @@ void DemoApplication::KeyDown(unsigned char key) {
 			bool doApplyingForces = false;
 			Vec2f applyForceDirection = Vec2f(0, 0);
 
-			if (key == GLUT_KEY_UP) {
+			if (key == fpl_Key::fpl_Key_Up) {
 				doApplyingForces = true;
 				applyForceDirection += Vec2f(0, 1);
-			} else if (key == GLUT_KEY_DOWN) {
+			} else if (key == fpl_Key::fpl_Key_Down) {
 				doApplyingForces = true;
 				applyForceDirection += Vec2f(0, -1);
 			}
 
-			if (key == GLUT_KEY_LEFT) {
+			if (key == fpl_Key::fpl_Key_Left) {
 				doApplyingForces = true;
 				applyForceDirection += Vec2f(-1, 0);
-			} else if (key == GLUT_KEY_RIGHT) {
+			} else if (key == fpl_Key::fpl_Key_Right) {
 				doApplyingForces = true;
 				applyForceDirection += Vec2f(1, 0);
 			}
@@ -458,30 +458,30 @@ void DemoApplication::KeyDown(unsigned char key) {
 void DemoApplication::KeyUp(unsigned char key) {
 	if (!benchmarkActive) {
 		if (benchmarkDone) {
-			if (key == 27) {
+			if (key == fpl_Key::fpl_Key_Escape) {
 				benchmarkDone = false;
 			}
 		} else {
-			if (key == ' ') {
+			if (key == fpl_Key::fpl_Key_Space) {
 				activeScenarioIndex = (activeScenarioIndex + 1) % ArrayCount(SPHScenarios);
 				LoadScenario(activeScenarioIndex);
-			} else if (key == 'p') {
+			} else if (key == fpl_Key::fpl_Key_P) {
 				simulationActive = !simulationActive;
-			} else if (key == 'd') {
+			} else if (key == fpl_Key::fpl_Key_D) {
 				demoIndex = (demoIndex + 1) % 4;
 				simulationActive = true;
 				LoadDemo(demoIndex);
-			} else if (key == 'r') {
+			} else if (key == fpl_Key::fpl_Key_R) {
 				LoadScenario(activeScenarioIndex);
-			} else if (key == 't' && demo->IsMultiThreadingSupported()) {
+			} else if (key == fpl_Key::fpl_Key_T && demo->IsMultiThreadingSupported()) {
 				multiThreadingActive = !multiThreadingActive;
 				demo->SetMultiThreading(multiThreadingActive);
-			} else if (key == 'b') {
+			} else if (key == fpl_Key::fpl_Key_B) {
 				StartBenchmark();
 			}
 		}
 	} else {
-		if (key == 27) {
+		if (key == fpl_Key::fpl_Key_Escape) {
 			StopBenchmark();
 		}
 	}

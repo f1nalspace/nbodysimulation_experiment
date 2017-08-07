@@ -58,13 +58,9 @@ MIT License
 Copyright (c) 2017 Torsten Spaete
 -------------------------------------------------------------------------------------------------------------------
 */
-#include <GL/glew.h>
-#if _WIN32
-// @NOTE(final): windef.h defines min/max macros defined in lowerspace, this will break std::min/max so we have to tell the header we dont want that macros!
-#define NOMINMAX
-#include <GL/wglew.h>
-#endif
-#include <GL/freeglut.h>
+#include <GL\glew.h>
+#define FPL_IMPLEMENTATION
+#include <final_platform_layer.h>
 #include <chrono>
 #include <stack>
 
@@ -79,10 +75,6 @@ static float lastFrameTime = 0.0f;
 static uint64_t lastFrameCycles = 0;
 static uint64_t lastCycles = 0;
 static std::chrono::time_point<std::chrono::steady_clock> lastFrameClock;
-
-static void ResizeFromGLUT(int width, int height) {
-	globalApp->Resize(width, height);
-}
 
 static void OpenGLPopVertexIndexArray(std::stack<Render::VertexIndexArrayHeader *> &stack) {
 	if (stack.size() > 0) {
@@ -467,31 +459,65 @@ static void OpenGLDrawCommandBuffer(Render::CommandBuffer *commandBuffer) {
 	OpenGLPopVertexIndexArray(vertexIndexArrayStack);
 }
 
-static void DisplayFromGLUT() {
-	Render::ResetCommandBuffer(globalApp->commandBuffer);
-	globalApp->UpdateAndRender(lastFrameTime, lastFrameCycles);
-	OpenGLDrawCommandBuffer(globalApp->commandBuffer);
+int main(int argc, char **args) {
+	if (fpl_Init(fpl_InitFlags_VideoOpenGL)) {
+		Application *app = globalApp = new DemoApplication();
+		Window *window = app->GetWindow();
 
-	glutSwapBuffers();
+		app->Init();
 
-	auto endFrameClock = std::chrono::high_resolution_clock::now();
-	auto durationClock = endFrameClock - lastFrameClock;
-	lastFrameClock = endFrameClock;
-	uint64_t frameTimeInNanos = std::chrono::duration_cast<std::chrono::nanoseconds>(durationClock).count();
-	lastFrameTime = frameTimeInNanos / (float)1000000000;
+		while (fpl_WindowUpdate()) {
+			fpl_Event ev;
+			while (fpl_PollEvent(&ev)) {
+				switch (ev.type) {
+					case fpl_EventType::fpl_EventType_Window:
+					{
+						switch (ev.window.type) {
+							case fpl_WindowEventType::fpl_WindowEventType_Resized:
+							{
+								globalApp->Resize(ev.window.width, ev.window.height);
+							} break;
+						}
+					} break;
+					case fpl_EventType::fpl_EventType_Keyboard:
+					{
+						switch (ev.keyboard.type) {
+							case fpl_KeyboardEventType::fpl_KeyboardEventType_KeyDown:
+							{
+							} break;
+							case fpl_KeyboardEventType::fpl_KeyboardEventType_KeyUp:
+							{
+								globalApp->KeyUp(ev.keyboard.mappedKey);
+							} break;
+						}
+					} break;
+				}
+			}
 
-	uint64_t endCycles = __rdtsc();
-	lastFrameCycles = endCycles - lastCycles;
-	lastCycles = endCycles;
+			Render::ResetCommandBuffer(globalApp->commandBuffer);
+			globalApp->UpdateAndRender(lastFrameTime, lastFrameCycles);
+			OpenGLDrawCommandBuffer(globalApp->commandBuffer);
+
+			fpl_WindowFlip();
+
+			auto endFrameClock = std::chrono::high_resolution_clock::now();
+			auto durationClock = endFrameClock - lastFrameClock;
+			lastFrameClock = endFrameClock;
+			uint64_t frameTimeInNanos = std::chrono::duration_cast<std::chrono::nanoseconds>(durationClock).count();
+			lastFrameTime = frameTimeInNanos / (float)1000000000;
+
+			uint64_t endCycles = __rdtsc();
+			lastFrameCycles = endCycles - lastCycles;
+			lastCycles = endCycles;
+		}
+		fpl_Release();
+		delete app;
+	}
+
+	return 0;
 }
-static void KeyPressedFromGLUT(unsigned char key, int a, int b) {
-	globalApp->KeyUp(key);
-}
 
-static void SpecialKeyPressedFromGLUT(int key, int a, int b) {
-	globalApp->KeyUp(key);
-}
-
+#if 0
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 	Application *app = globalApp = new DemoApplication();
 	Window *window = app->GetWindow();
@@ -533,3 +559,4 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 	return 0;
 }
+#endif
