@@ -1,6 +1,7 @@
 #ifndef PSEUDORANDOM_H
 #define PSEUDORANDOM_H
 
+#include <final_platform_layer.hpp>
 #include <stdint.h>
 
 #include "vecmath.h"
@@ -1304,7 +1305,7 @@ static uint32_t RANDOM_TABLE[] = {
 	0x63d9c7b2,	0x10132026,	0x36196c32,	0x45978b2e,	0x4d599ab2,	0x22944528,
 	0x6fccdf98,	0x2a15542a,	0x3b5876b0,	0x15662acc,	0x33296652,	0x15cc2b98,
 };
-const static uint32_t RANDOM_TABLE_COUNT = ArrayCount(RANDOM_TABLE);
+const static uint32_t RANDOM_TABLE_COUNT = FPL_ARRAYCOUNT(RANDOM_TABLE);
 const static uint32_t RANDOM_TABLE_MIN_NUMBER = 262152;
 const static uint32_t RANDOM_TABLE_MAX_NUMBER = 2147352570;
 const static uint32_t RANDOM_TABLE_RANGE_NUMBER = RANDOM_TABLE_MAX_NUMBER - RANDOM_TABLE_MIN_NUMBER;
@@ -1527,7 +1528,7 @@ static uint32_t RANDOM_COLOR_TABLE[] = {
 	0xff3f9367,	0xffab01c8,	0xff740f78,	0xff6154af,	0xff6a861c,	0xff942548,
 	0xff33b899,	0xfffde32d,	0xff82494d,	0xffb6444f,	0xff96c5ee,	0xff8c97f5,
 };
-const static uint32_t RANDOM_COLOR_TABLE_COUNT = ArrayCount(RANDOM_COLOR_TABLE);
+const static uint32_t RANDOM_COLOR_TABLE_COUNT = FPL_ARRAYCOUNT(RANDOM_COLOR_TABLE);
 
 struct RandomSeries {
 	uint32_t intIndex;

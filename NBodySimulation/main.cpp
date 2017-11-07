@@ -2,7 +2,7 @@
 -------------------------------------------------------------------------------------------------------------------
 Multi-Threaded N-Body 2D Smoothed Particle Hydrodynamics Fluid Simulation based on paper "Particle-based Viscoelastic Fluid Simulation" by Simon Clavet, Philippe Beaudoin, and Pierre Poulin.
 
-Version 1.2
+Version 1.3
 
 A experiment about creating a two-way particle simulation in 4 different programming styles to see the difference in performance and maintainability.
 The core math is same for all implementations, including rendering and threading.
@@ -16,7 +16,7 @@ Demos:
 
 How to compile:
 
-Compile main.cpp only and link with opengl, freeglut and glew.
+Compile main.cpp only and link with opengl and glew.
 
 Benchmark:
 
@@ -31,13 +31,16 @@ Notes:
 
 Todo:
 
-- Replace GLUT with FPL
+- Replace glew with final_opengl.hpp
 - Migrate all GUI/Text rendering to imGUI
 - External particle forces
-- Add value labels on benchmark chart
+- Add bar value labels on benchmark chart
 - Migrate to modern opengl 3.3+
 
 Version History:
+
+1.3:
+- Migrated to FPL 0.3.3 alpha
 
 1.2:
 - Using command buffer instead of immediate rendering, so we render only in main.cpp
@@ -59,8 +62,11 @@ Copyright (c) 2017 Torsten Spaete
 -------------------------------------------------------------------------------------------------------------------
 */
 #include <GL\glew.h>
+
+#define FPL_AUTO_NAMESPACE 1
 #define FPL_IMPLEMENTATION
-#include <final_platform_layer.h>
+#include <final_platform_layer.hpp>
+
 #include <chrono>
 #include <stack>
 
@@ -68,7 +74,7 @@ Copyright (c) 2017 Torsten Spaete
 #include "utils.h"
 
 #define STB_TRUETYPE_IMPLEMENTATION
-#include <imgui/stb_truetype.h>
+#include <stb_truetype.h>
 
 static Application *globalApp = nullptr;
 static float lastFrameTime = 0.0f;
@@ -460,32 +466,39 @@ static void OpenGLDrawCommandBuffer(Render::CommandBuffer *commandBuffer) {
 }
 
 int main(int argc, char **args) {
-	if (fpl_Init(fpl_InitFlags_VideoOpenGL)) {
+	InitSettings settings = InitSettings();
+	settings.window.windowWidth = kWindowWidth;
+	settings.window.windowHeight = kWindowHeight;
+	if (InitPlatform(InitFlags::VideoOpenGL, settings)) {
 		Application *app = globalApp = new DemoApplication();
 		Window *window = app->GetWindow();
 
+		WindowSize winSize = GetWindowArea();
+		window->width = winSize.width;
+		window->height = winSize.height;
+
 		app->Init();
 
-		while (fpl_WindowUpdate()) {
-			fpl_Event ev;
-			while (fpl_PollEvent(&ev)) {
+		while (WindowUpdate()) {
+			Event ev;
+			while (PollWindowEvent(ev)) {
 				switch (ev.type) {
-					case fpl_EventType::fpl_EventType_Window:
+					case EventType::Window:
 					{
 						switch (ev.window.type) {
-							case fpl_WindowEventType::fpl_WindowEventType_Resized:
+							case WindowEventType::Resized:
 							{
 								globalApp->Resize(ev.window.width, ev.window.height);
 							} break;
 						}
 					} break;
-					case fpl_EventType::fpl_EventType_Keyboard:
+					case EventType::Keyboard:
 					{
 						switch (ev.keyboard.type) {
-							case fpl_KeyboardEventType::fpl_KeyboardEventType_KeyDown:
+							case KeyboardEventType::KeyDown:
 							{
 							} break;
-							case fpl_KeyboardEventType::fpl_KeyboardEventType_KeyUp:
+							case KeyboardEventType::KeyUp:
 							{
 								globalApp->KeyUp(ev.keyboard.mappedKey);
 							} break;
@@ -498,7 +511,7 @@ int main(int argc, char **args) {
 			globalApp->UpdateAndRender(lastFrameTime, lastFrameCycles);
 			OpenGLDrawCommandBuffer(globalApp->commandBuffer);
 
-			fpl_WindowFlip();
+			WindowFlip();
 
 			auto endFrameClock = std::chrono::high_resolution_clock::now();
 			auto durationClock = endFrameClock - lastFrameClock;
@@ -510,53 +523,9 @@ int main(int argc, char **args) {
 			lastFrameCycles = endCycles - lastCycles;
 			lastCycles = endCycles;
 		}
-		fpl_Release();
+		ReleasePlatform();
 		delete app;
 	}
 
 	return 0;
 }
-
-#if 0
-int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-	Application *app = globalApp = new DemoApplication();
-	Window *window = app->GetWindow();
-
-	int argc = 0;
-	char **args = nullptr;
-
-	glutInit(&argc, args);
-	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
-	glutInitWindowPosition(window->GetLeft(), window->GetTop());
-	glutInitWindowSize(window->GetWidth(), window->GetHeight());
-
-	std::string windowTitle = std::string("C++ NBody Simulation V") + std::string(kAppVersion);
-	glutCreateWindow(windowTitle.c_str());
-
-	glewInit();
-
-#if _WIN32
-	if (WGL_EXT_swap_control) {
-		wglSwapIntervalEXT(0);
-	}
-#endif
-
-	app->Init();
-
-	glutDisplayFunc(DisplayFromGLUT);
-	glutReshapeFunc(ResizeFromGLUT);
-	glutIdleFunc(DisplayFromGLUT);
-	glutKeyboardUpFunc(KeyPressedFromGLUT);
-	glutSpecialUpFunc(SpecialKeyPressedFromGLUT);
-
-	lastFrameClock = std::chrono::high_resolution_clock::now();
-	lastFrameTime = 0.0f;
-	lastCycles = __rdtsc();
-
-	glutMainLoop();
-
-	delete app;
-
-	return 0;
-}
-#endif

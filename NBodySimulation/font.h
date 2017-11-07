@@ -1,15 +1,13 @@
 #ifndef FONT_H
 #define FONT_H
 
-#include <final_platform_layer.h>
+#include <final_platform_layer.hpp>
 #include <stdint.h>
-#include <malloc.h>
 #include <stdio.h>
 #include <assert.h>
+#include <stb_truetype.h>
 
 #include "vecmath.h"
-
-#include <imgui/stb_truetype.h>
 
 struct FontGlyph {
 	Vec2f alignPercentage;
@@ -93,20 +91,6 @@ inline float GetTextWidth(const char *text, const uint32_t textLen, Font *font, 
 	return(result);
 }
 
-static uint8_t *LoadFileContent(const char *filename) {
-	uint8_t *result = nullptr;
-	fpl_FileHandle handle = fpl_OpenBinaryFile(filename);
-	if (handle.isValid) {
-		fpl_SetFilePosition32(&handle, 0, fpl_FilePositionMode_End);
-		uint32_t fileSize = fpl_GetFilePosition32(&handle);
-		fpl_SetFilePosition32(&handle, 0, fpl_FilePositionMode_Beginning);
-		result = (uint8_t *)malloc(fileSize);
-		fpl_ReadFileBlock32(&handle, fileSize, result, fileSize);
-		fpl_CloseFile(&handle);
-	}
-	return(result);
-}
-
 static Font LoadFont(const char *filename, const uint32_t fontIndex, const float fontSize, uint32_t firstChar, uint32_t lastChar, uint32_t atlasWidth, uint32_t atlasHeight) {
 #define BETTER_QUALITY 0
 
@@ -120,9 +104,9 @@ static Font LoadFont(const char *filename, const uint32_t fontIndex, const float
 
 		if (stbtt_InitFont(&fontInfo, ttfBuffer, fontOffset)) {
 			uint32_t charCount = (lastChar - firstChar) + 1;
-			uint8_t *atlasAlphaBitmap = (uint8_t *)malloc(atlasWidth * atlasHeight);
+			uint8_t *atlasAlphaBitmap = (uint8_t *)AllocateMem(atlasWidth * atlasHeight);
 #if BETTER_QUALITY
-			stbtt_packedchar *packedChars = (stbtt_packedchar *)malloc(charCount * sizeof(stbtt_packedchar));
+			stbtt_packedchar *packedChars = (stbtt_packedchar *)AllocateMemory(charCount * sizeof(stbtt_packedchar));
 			memset(packedChars, 0, charCount * sizeof(stbtt_packedchar));
 
 			stbtt_pack_range characterRange = {};
@@ -140,7 +124,7 @@ static Font LoadFont(const char *filename, const uint32_t fontIndex, const float
 			stbtt_PackFontRanges(&packContext, ttfBuffer, fontIndex, ranges[0], 1);
 			stbtt_PackEnd(&packContext);
 #else
-			stbtt_bakedchar *packedChars = (stbtt_bakedchar *)malloc(charCount * sizeof(stbtt_bakedchar));
+			stbtt_bakedchar *packedChars = (stbtt_bakedchar *)AllocateMem(charCount * sizeof(stbtt_bakedchar));
 			stbtt_BakeFontBitmap(ttfBuffer, fontOffset, fontSize, atlasAlphaBitmap, atlasWidth, atlasHeight, firstChar, charCount, packedChars);
 #endif
 
@@ -177,7 +161,7 @@ static Font LoadFont(const char *filename, const uint32_t fontIndex, const float
 			float verticalCenterCorrectionPx = (0 + descentPx) - (heightPx * 0.5f);
 
 			size_t glyphsSize = sizeof(FontGlyph) * charCount;
-			FontGlyph *glyphs = (FontGlyph *)malloc(glyphsSize);
+			FontGlyph *glyphs = (FontGlyph *)AllocateMem(glyphsSize);
 			memset(glyphs, 0, glyphsSize);
 
 			for (uint32_t glyphIndex = 0; glyphIndex < charCount; ++glyphIndex) {
@@ -218,7 +202,7 @@ static Font LoadFont(const char *filename, const uint32_t fontIndex, const float
 
 			// Build kerning table
 			size_t kerningTableSize = sizeof(float) * charCount * charCount;
-			float *kerningTable = (float *)malloc(kerningTableSize);
+			float *kerningTable = (float *)AllocateMem(kerningTableSize);
 			memset(kerningTable, 0, kerningTableSize);
 			for (uint32_t charIndex = firstChar; charIndex < lastChar; ++charIndex) {
 #if BETTER_QUALITY
@@ -240,7 +224,7 @@ static Font LoadFont(const char *filename, const uint32_t fontIndex, const float
 
 			// Build default advance table
 			size_t defaultAdvanceSize = charCount * sizeof(float);
-			float *defaultAdvance = (float *)malloc(defaultAdvanceSize);
+			float *defaultAdvance = (float *)AllocateMem(defaultAdvanceSize);
 			memset(defaultAdvance, 0, defaultAdvanceSize);
 			for (uint32_t charIndex = firstChar; charIndex < lastChar; ++charIndex) {
 				int advanceRaw, leftSideBearing;
@@ -264,16 +248,16 @@ static Font LoadFont(const char *filename, const uint32_t fontIndex, const float
 			result.atlasHeight = atlasHeight;
 		}
 
-		free(ttfBuffer);
+		fpl::memory::FreeMem(ttfBuffer);
 	}
 
 	return(result);
 }
 
 static void ReleaseFont(Font *font) {
-	free(font->kerningTable);
-	free(font->glyphs);
-	free(font->atlasAlphaBitmap);
+	fpl::memory::FreeMem(font->kerningTable);
+	fpl::memory::FreeMem(font->glyphs);
+	fpl::memory::FreeMem(font->atlasAlphaBitmap);
 	*font = {};
 }
 

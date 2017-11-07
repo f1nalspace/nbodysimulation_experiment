@@ -1,6 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <final_platform_layer.hpp>
 #include <assert.h>
 #include <stdio.h>
 #include <algorithm>
@@ -8,8 +9,6 @@
 #include <varargs.h>
 
 #define force_inline __forceinline
-#define StaticAssert(e) extern char (*ct_assert(void)) [sizeof(char[1 - 2*!(e)])]
-#define ArrayCount(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 template <typename T>
 inline T PointerToValue(void *ptr) {
@@ -39,30 +38,6 @@ inline void Accumulate(T &value, T a) {
 	value += a;
 }
 
-inline std::string GetProcessorName()
-{
-	int CPUInfo[4] = { -1 };
-	char CPUBrandString[0x40];
-	__cpuid(CPUInfo, 0x80000000);
-	unsigned int nExIds = CPUInfo[0];
-
-	memset(CPUBrandString, 0, sizeof(CPUBrandString));
-
-	// Get the information associated with each extended ID.
-	for (unsigned int i = 0x80000000; i <= nExIds; ++i)
-	{
-		__cpuid(CPUInfo, i);
-		// Interpret CPU brand string.
-		if (i == 0x80000002)
-			memcpy(CPUBrandString, CPUInfo, sizeof(CPUInfo));
-		else if (i == 0x80000003)
-			memcpy(CPUBrandString + 16, CPUInfo, sizeof(CPUInfo));
-		else if (i == 0x80000004)
-			memcpy(CPUBrandString + 32, CPUInfo, sizeof(CPUInfo));
-	}
-	return(std::string(CPUBrandString));
-}
-
 inline std::string StringFormat(const std::string &format, const size_t bufferCount, ...) {
 	std::string strBuf;
 	strBuf.resize(bufferCount);
@@ -72,6 +47,20 @@ inline std::string StringFormat(const std::string &format, const size_t bufferCo
 	va_end(vaList);
 	strBuf.resize(characterCount);
 	return(strBuf);
+}
+
+static uint8_t *LoadFileContent(const char *filename) {
+	uint8_t *result = nullptr;
+	fpl::files::FileHandle handle = fpl::files::OpenBinaryFile(filename);
+	if (handle.isValid) {
+		fpl::files::SetFilePosition32(handle, 0, fpl::files::FilePositionMode::End);
+		uint32_t fileSize = fpl::files::GetFilePosition32(handle);
+		fpl::files::SetFilePosition32(handle, 0, fpl::files::FilePositionMode::Beginning);
+		result = (uint8_t *)fpl::memory::AllocateMem(fileSize);
+		fpl::files::ReadFileBlock32(handle, fileSize, result, fileSize);
+		fpl::files::CloseFile(handle);
+	}
+	return(result);
 }
 
 #endif

@@ -72,7 +72,7 @@ const uint32_t kSPHMaxBodyCount = 100;
 const uint32_t kSPHMaxEmitterCount = 8;
 
 // @NOTE: Particle radius must never be smaller collision margin
-//StaticAssert(kSPHParticleRadius > kSPHCollisionMargin);
+FPL_STATICASSERT(kSPHParticleRadius > kSPHCollisionMargin);
 
 struct SPHParameters {
 	float kernelHeight;

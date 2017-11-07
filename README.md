@@ -1,7 +1,7 @@
 # nbodysimulation_experiment
 Multi-Threaded N-Body 2D Smoothed Particle Hydrodynamics Fluid Simulation based on paper "Particle-based Viscoelastic Fluid Simulation" by Simon Clavet, Philippe Beaudoin, and Pierre Poulin.
 
-Version 1.2
+Version 1.3
 
 A experiment about creating a two-way particle simulation in 4 different programming styles to see the difference in performance and maintainability.
 The core math is same for all implementations, including rendering and threading.
@@ -30,13 +30,16 @@ To stop a benchmark hit "Escape" key.
 
 ## Todo:
 
-* Replace GLUT with FPL
+* Replace glew with final_opengl.hpp
 * Migrate all GUI/Text rendering to imGUI
 * External particle forces
-* Add value labels on benchmark chart
+* Add bar value labels on benchmark chart
 * Migrate to modern opengl 3.3+
 
 ## Version History:
+
+### 1.3:
+* Migrated to FPL 0.3.3 alpha
 
 ### 1.2:
 * Using command buffer instead of immediate rendering, so we render only in main.cpp

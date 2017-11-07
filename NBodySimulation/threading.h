@@ -9,29 +9,6 @@
 #include <deque>
 #include <atomic>
 
-template <typename T>
-class ConcurrentQueue {
-private:
-	std::deque<T> _queue;
-	std::mutex _queueMutex;
-public:
-	inline void Push(T value) {
-		std::unique_lock<std::mutex> lock(_queueMutex);
-		_queue.push_back(value);
-	}
-
-	inline bool Pop(T &out) {
-		std::unique_lock<std::mutex> lock(_queueMutex, std::defer_lock);
-		lock.lock();
-		if (!_queue.empty()) {
-			T value  = _queue.front();
-			_queue.pop_front();
-			out = value;
-		}
-		lock.unlock();
-	}
-};
-
 typedef std::function<void(const size_t, const size_t, const float)> thread_pool_task_function;
 struct ThreadPoolTask {
 	size_t startIndex;

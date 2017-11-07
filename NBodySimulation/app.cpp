@@ -155,7 +155,7 @@ void DemoApplication::PushDemoStatistics() {
 }
 
 void DemoApplication::RenderBenchmark(OSDState *osdState, const float left, float bottom, const float width, const float height) {
-	std::string processorName = GetProcessorName();
+	const std::string &processorName = std::string(GetProcessorName());
 
 	Font *font = &chartFont;
 	Render::TextureHandle fontTexture = chartFontTexture;
@@ -197,9 +197,9 @@ void DemoApplication::RenderBenchmark(OSDState *osdState, const float left, floa
 
 	char osdBuffer[256];
 	DemoStatistics *firstDemoStat = &demoStats[0];
-	sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Benchmark done, Scenario: %llu, Frames: %llu, Iterations: %llu", (firstDemoStat->scenarioIndex + 1), firstDemoStat->frameCount, firstDemoStat->iterationCount);
+	sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Benchmark done, Scenario: %llu, Frames: %llu, Iterations: %llu", (firstDemoStat->scenarioIndex + 1), firstDemoStat->frameCount, firstDemoStat->iterationCount);
 	DrawOSDLine(osdState, osdBuffer);
-	sprintf_s(osdBuffer, ArrayCount(osdBuffer), "%s", processorName.c_str());
+	sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "%s", processorName.c_str());
 	DrawOSDLine(osdState, osdBuffer);
 }
 
@@ -295,59 +295,59 @@ void DemoApplication::UpdateAndRender(const float frameTime, const uint64_t cycl
 		if (benchmarkDone && (demoStats.size() > 0)) {
 			RenderBenchmark(&osdState, 0.0f, 0.0f, (float)w, (float)h);
 		} else {
-			size_t scenarioCount = ArrayCount(SPHScenarios);
-			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Scenario: [%llu / %llu] %s (Space)", (activeScenarioIndex + 1), scenarioCount, activeScenarioName.c_str());
+			size_t scenarioCount = FPL_ARRAYCOUNT(SPHScenarios);
+			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Scenario: [%llu / %llu] %s (Space)", (activeScenarioIndex + 1), scenarioCount, activeScenarioName.c_str());
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Demo: %s (D)", demoTitle.c_str());
+			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Demo: %s (D)", demoTitle.c_str());
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Start benchmark (B)");
+			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Start benchmark (B)");
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Simulation: %s (P)", (simulationActive ? "yes" : "no"));
+			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Simulation: %s (P)", (simulationActive ? "yes" : "no"));
 			DrawOSDLine(&osdState, osdBuffer);
 			if (demo->IsMultiThreadingSupported()) {
-				sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Multithreading: %s, %llu threads (T)", (demo->IsMultiThreading() ? "yes" : "no"), demo->GetWorkerThreadCount());
+				sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Multithreading: %s, %llu threads (T)", (demo->IsMultiThreading() ? "yes" : "no"), demo->GetWorkerThreadCount());
 			} else {
-				sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Multithreading: not supported");
+				sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Multithreading: not supported");
 			}
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Reset (R)");
+			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Reset (R)");
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Frame time: %f ms, Cycles: %llu", (frameTime * 1000.0f), cycles);
+			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Frame time: %f ms, Cycles: %llu", (frameTime * 1000.0f), cycles);
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Particles: %llu", demo->GetParticleCount());
+			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Particles: %llu", demo->GetParticleCount());
 			DrawOSDLine(&osdState, osdBuffer);
 
-			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Stats:");
+			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Stats:");
 			DrawOSDLine(&osdState, osdBuffer);
 			const SPHStatistics &stats = demo->GetStats();
-			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "\tMin/Max cell particle count: %llu / %llu", stats.minCellParticleCount, stats.maxCellParticleCount);
+			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tMin/Max cell particle count: %llu / %llu", stats.minCellParticleCount, stats.maxCellParticleCount);
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "\tMin/Max particle neighbor count: %llu / %llu", stats.minParticleNeighborCount, stats.maxParticleNeighborCount);
+			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tMin/Max particle neighbor count: %llu / %llu", stats.minParticleNeighborCount, stats.maxParticleNeighborCount);
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "\tTime integration: %f ms", stats.time.integration);
+			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tTime integration: %f ms", stats.time.integration);
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "\tTime viscosity forces: %f ms", stats.time.viscosityForces);
+			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tTime viscosity forces: %f ms", stats.time.viscosityForces);
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "\tTime predict: %f ms", stats.time.predict);
+			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tTime predict: %f ms", stats.time.predict);
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "\tTime update grid: %f ms", stats.time.updateGrid);
+			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tTime update grid: %f ms", stats.time.updateGrid);
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "\tTime neighbor search: %f ms", stats.time.neighborSearch);
+			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tTime neighbor search: %f ms", stats.time.neighborSearch);
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "\tTime density and pressure: %f ms", stats.time.densityAndPressure);
+			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tTime density and pressure: %f ms", stats.time.densityAndPressure);
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "\tTime delta positions: %f ms", stats.time.deltaPositions);
+			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tTime delta positions: %f ms", stats.time.deltaPositions);
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, ArrayCount(osdBuffer), "\tTime collisions: %f ms", stats.time.collisions);
+			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tTime collisions: %f ms", stats.time.collisions);
 			DrawOSDLine(&osdState, osdBuffer);
 		}
 	} else {
-		sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Benchmarking - Demo %llu of %llu, Scenario: %s (Escape)", demoIndex + 1, (size_t)4, activeScenarioName.c_str());
+		sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Benchmarking - Demo %llu of %llu, Scenario: %s (Escape)", demoIndex + 1, (size_t)4, activeScenarioName.c_str());
 		DrawOSDLine(&osdState, osdBuffer);
-		sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Iteration %llu of %llu", benchmarkIterations.size(), kBenchmarkIterationCount);
+		sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Iteration %llu of %llu", benchmarkIterations.size(), kBenchmarkIterationCount);
 		DrawOSDLine(&osdState, osdBuffer);
 		assert(activeBenchmarkIteration != nullptr);
-		sprintf_s(osdBuffer, ArrayCount(osdBuffer), "Frame %llu of %llu", activeBenchmarkIteration->frames.size() + 1, kBenchmarkFrameCount);
+		sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Frame %llu of %llu", activeBenchmarkIteration->frames.size() + 1, kBenchmarkFrameCount);
 		DrawOSDLine(&osdState, osdBuffer);
 
 		const char *bigText = "Benchmarking";
@@ -424,24 +424,24 @@ void DemoApplication::StopBenchmark() {
 	activeBenchmarkIteration = nullptr;
 }
 
-void DemoApplication::KeyDown(unsigned char key) {
+void DemoApplication::KeyDown(const Key key) {
 	if (!benchmarkActive) {
 		if (!benchmarkDone && simulationActive) {
 			bool doApplyingForces = false;
 			Vec2f applyForceDirection = Vec2f(0, 0);
 
-			if (key == fpl_Key::fpl_Key_Up) {
+			if (key == Key::Key_Up) {
 				doApplyingForces = true;
 				applyForceDirection += Vec2f(0, 1);
-			} else if (key == fpl_Key::fpl_Key_Down) {
+			} else if (key == Key::Key_Down) {
 				doApplyingForces = true;
 				applyForceDirection += Vec2f(0, -1);
 			}
 
-			if (key == fpl_Key::fpl_Key_Left) {
+			if (key == Key::Key_Left) {
 				doApplyingForces = true;
 				applyForceDirection += Vec2f(-1, 0);
-			} else if (key == fpl_Key::fpl_Key_Right) {
+			} else if (key == Key::Key_Right) {
 				doApplyingForces = true;
 				applyForceDirection += Vec2f(1, 0);
 			}
@@ -455,33 +455,33 @@ void DemoApplication::KeyDown(unsigned char key) {
 	}
 }
 
-void DemoApplication::KeyUp(unsigned char key) {
+void DemoApplication::KeyUp(const Key key) {
 	if (!benchmarkActive) {
 		if (benchmarkDone) {
-			if (key == fpl_Key::fpl_Key_Escape) {
+			if (key == Key::Key_Escape) {
 				benchmarkDone = false;
 			}
 		} else {
-			if (key == fpl_Key::fpl_Key_Space) {
-				activeScenarioIndex = (activeScenarioIndex + 1) % ArrayCount(SPHScenarios);
+			if (key == Key::Key_Space) {
+				activeScenarioIndex = (activeScenarioIndex + 1) % FPL_ARRAYCOUNT(SPHScenarios);
 				LoadScenario(activeScenarioIndex);
-			} else if (key == fpl_Key::fpl_Key_P) {
+			} else if (key == Key::Key_P) {
 				simulationActive = !simulationActive;
-			} else if (key == fpl_Key::fpl_Key_D) {
+			} else if (key == Key::Key_D) {
 				demoIndex = (demoIndex + 1) % 4;
 				simulationActive = true;
 				LoadDemo(demoIndex);
-			} else if (key == fpl_Key::fpl_Key_R) {
+			} else if (key == Key::Key_R) {
 				LoadScenario(activeScenarioIndex);
-			} else if (key == fpl_Key::fpl_Key_T && demo->IsMultiThreadingSupported()) {
+			} else if (key == Key::Key_T && demo->IsMultiThreadingSupported()) {
 				multiThreadingActive = !multiThreadingActive;
 				demo->SetMultiThreading(multiThreadingActive);
-			} else if (key == fpl_Key::fpl_Key_B) {
+			} else if (key == Key::Key_B) {
 				StartBenchmark();
 			}
 		}
 	} else {
-		if (key == fpl_Key::fpl_Key_Escape) {
+		if (key == Key::Key_Escape) {
 			StopBenchmark();
 		}
 	}

@@ -1,7 +1,7 @@
 #ifndef APP_H
 #define APP_H
 
-#include <final_platform_layer.h>
+#include <final_platform_layer.hpp>
 #include <string>
 #include <vector>
 
@@ -18,7 +18,7 @@ const int kWindowWidth = 1280;
 const int kWindowHeight = 720;
 const char *kAppVersion = "1.1";
 
-#define VERY_SHORT_BENCHMARK 0
+#define VERY_SHORT_BENCHMARK 1
 
 #if !VERY_SHORT_BENCHMARK
 const size_t kBenchmarkFrameCount = 50;
@@ -63,7 +63,8 @@ struct Application {
 	void Resize(const int width, const int height);
 
 	virtual void Init() = 0;
-	virtual void KeyUp(unsigned char key) = 0;
+	virtual void KeyDown(const Key key) = 0;
+	virtual void KeyUp(const Key key) = 0;
 	virtual void UpdateAndRender(const float frametime, const uint64_t cycles) = 0;
 };
 
@@ -147,8 +148,8 @@ struct DemoApplication : public Application {
 	~DemoApplication();
 	void Init();
 	void UpdateAndRender(const float frameTime, const uint64_t cycles);
-	void KeyUp(unsigned char key);
-	void KeyDown(unsigned char key);
+	void KeyUp(const Key key);
+	void KeyDown(const Key key);
 	void LoadScenario(size_t scenarioIndex);
 };
 
