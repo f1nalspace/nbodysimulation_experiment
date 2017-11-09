@@ -56,7 +56,7 @@ static uint8_t *LoadFileContent(const char *filename) {
 		fpl::files::SetFilePosition32(handle, 0, fpl::files::FilePositionMode::End);
 		uint32_t fileSize = fpl::files::GetFilePosition32(handle);
 		fpl::files::SetFilePosition32(handle, 0, fpl::files::FilePositionMode::Beginning);
-		result = (uint8_t *)fpl::memory::AllocateMem(fileSize);
+		result = (uint8_t *)fpl::memory::MemoryAllocate(fileSize);
 		fpl::files::ReadFileBlock32(handle, fileSize, result, fileSize);
 		fpl::files::CloseFile(handle);
 	}

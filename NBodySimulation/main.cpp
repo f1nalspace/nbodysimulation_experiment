@@ -473,9 +473,10 @@ int main(int argc, char **args) {
 		Application *app = globalApp = new DemoApplication();
 		Window *window = app->GetWindow();
 
-		WindowSize winSize = GetWindowArea();
-		window->width = winSize.width;
-		window->height = winSize.height;
+		// @NOTE(final): Get window area at startup, because the titlebar and borders takes up space too.
+		WindowSize windowArea = GetWindowArea();
+		window->width = windowArea.width;
+		window->height = windowArea.height;
 
 		app->Init();
 

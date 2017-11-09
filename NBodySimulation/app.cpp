@@ -27,6 +27,8 @@ Window::Window() :
 Application::Application() {
 	window = new Window();
 	commandBuffer = new Render::CommandBuffer();
+	char buffer[1024];
+	cpuName = fpl::hardware::GetProcessorName(buffer, FPL_ARRAYCOUNT(buffer));
 }
 
 Application::~Application() {
@@ -155,8 +157,6 @@ void DemoApplication::PushDemoStatistics() {
 }
 
 void DemoApplication::RenderBenchmark(OSDState *osdState, const float left, float bottom, const float width, const float height) {
-	const std::string &processorName = std::string(GetProcessorName());
-
 	Font *font = &chartFont;
 	Render::TextureHandle fontTexture = chartFontTexture;
 	float fontHeight = 16.0f;
@@ -199,7 +199,7 @@ void DemoApplication::RenderBenchmark(OSDState *osdState, const float left, floa
 	DemoStatistics *firstDemoStat = &demoStats[0];
 	sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Benchmark done, Scenario: %llu, Frames: %llu, Iterations: %llu", (firstDemoStat->scenarioIndex + 1), firstDemoStat->frameCount, firstDemoStat->iterationCount);
 	DrawOSDLine(osdState, osdBuffer);
-	sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "%s", processorName.c_str());
+	sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "CPU: %s", cpuName.c_str());
 	DrawOSDLine(osdState, osdBuffer);
 }
 

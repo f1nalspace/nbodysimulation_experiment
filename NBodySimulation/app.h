@@ -1,6 +1,7 @@
 #ifndef APP_H
 #define APP_H
 
+#define FPL_AUTO_NAMESPACE 1
 #include <final_platform_layer.hpp>
 #include <string>
 #include <vector>
@@ -18,7 +19,7 @@ const int kWindowWidth = 1280;
 const int kWindowHeight = 720;
 const char *kAppVersion = "1.1";
 
-#define VERY_SHORT_BENCHMARK 1
+#define VERY_SHORT_BENCHMARK 0
 
 #if !VERY_SHORT_BENCHMARK
 const size_t kBenchmarkFrameCount = 50;
@@ -50,6 +51,7 @@ struct Window {
 };
 
 struct Application {
+	std::string cpuName;
 	Window  *window;
 	Render::CommandBuffer *commandBuffer;
 

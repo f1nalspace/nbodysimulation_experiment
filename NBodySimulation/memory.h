@@ -15,13 +15,13 @@ struct MemoryBlock {
 inline MemoryBlock AllocateMemoryBlock(const size_t size) {
 	MemoryBlock result = {};
 	result.size = size;
-	result.base = fpl::memory::AllocateMem(size);
+	result.base = fpl::memory::MemoryAllocate(size);
 	return(result);
 }
 
 inline void ReleaseMemoryBlock(MemoryBlock *block) {
 	if (block->base != nullptr) {
-		fpl::memory::FreeMem(block->base);
+		fpl::memory::MemoryFree(block->base);
 	}
 	*block = {};
 }
@@ -32,7 +32,7 @@ inline T *PushSize(MemoryBlock *block, const size_t size, const bool clear = tru
 	void *ptr = (void *)((uint8_t *)block->base + block->offset);
 	block->offset += size;
 	if (clear) {
-		fpl::memory::ClearMem(ptr, size);
+		fpl::memory::MemoryClear(ptr, size);
 	}
 	T *result = (T*)ptr;
 	return(result);

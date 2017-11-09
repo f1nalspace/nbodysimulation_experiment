@@ -39,7 +39,7 @@ To stop a benchmark hit "Escape" key.
 ## Version History:
 
 ### 1.3:
-* Migrated to FPL 0.3.3 alpha
+* Migrated to FPL 0.3.5 alpha
 
 ### 1.2:
 * Using command buffer instead of immediate rendering, so we render only in main.cpp
