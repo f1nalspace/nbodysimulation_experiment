@@ -31,7 +31,6 @@ Notes:
 
 Todo:
 
-- Replace glew with final_dynamic_opengl.h
 - Migrate all GUI/Text rendering to imGUI
 - External particle forces
 - Add bar value labels on benchmark chart
@@ -41,6 +40,7 @@ Version History:
 
 1.4:
 - Migrated to FPL 0.7.8.0 beta
+- Replaced GLEW with final_dynamic_opengl.h
 
 1.3:
 - Migrated to FPL 0.3.3 alpha
@@ -64,11 +64,12 @@ MIT License
 Copyright (c) 2017 Torsten Spaete
 -------------------------------------------------------------------------------------------------------------------
 */
-#include <GL\glew.h>
-
 #define FPL_IMPLEMENTATION
 #define FPL_NO_AUDIO
 #include <final_platform_layer.h>
+
+#define FGL_IMPLEMENTATION
+#include <final_dynamic_opengl.h>
 
 #include <chrono>
 #include <stack>
@@ -475,64 +476,67 @@ int main(int argc, char **args) {
 	settings.video.driver = fplVideoDriverType_OpenGL;
 	fplFormatAnsiString(settings.window.windowTitle, FPL_ARRAYCOUNT(settings.window.windowTitle), "NBody Simulation v%s", kAppVersion);
 	if (fplPlatformInit(fplInitFlags_Video, &settings)) {
-		Application *app = globalApp = new DemoApplication();
-		Window *window = app->GetWindow();
+		if (fglLoadOpenGL(true)) {
+			Application *app = globalApp = new DemoApplication();
+			Window *window = app->GetWindow();
 
-		// @NOTE(final): Get window area at startup, because the titlebar and borders takes up space too.
-		fplWindowSize windowArea;
-		if(fplGetWindowArea(&windowArea)) {
-			window->width = windowArea.width;
-			window->height = windowArea.height;
-		}
-
-		app->Init();
-
-		while (fplWindowUpdate()) {
-			fplEvent ev;
-			while (fplPollEvent(&ev)) {
-				switch (ev.type) {
-					case fplEventType_Window:
-					{
-						switch (ev.window.type) {
-							case fplWindowEventType_Resized:
-							{
-								globalApp->Resize(ev.window.width, ev.window.height);
-							} break;
-						}
-					} break;
-					case fplEventType_Keyboard:
-					{
-						switch (ev.keyboard.type) {
-							case fplKeyboardEventType_KeyDown:
-							{
-							} break;
-							case fplKeyboardEventType_KeyUp:
-							{
-								globalApp->KeyUp(ev.keyboard.mappedKey);
-							} break;
-						}
-					} break;
-				}
+			// @NOTE(final): Get window area at startup, because the titlebar and borders takes up space too.
+			fplWindowSize windowArea;
+			if (fplGetWindowArea(&windowArea)) {
+				window->width = windowArea.width;
+				window->height = windowArea.height;
 			}
 
-			Render::ResetCommandBuffer(globalApp->commandBuffer);
-			globalApp->UpdateAndRender(lastFrameTime, lastFrameCycles);
-			OpenGLDrawCommandBuffer(globalApp->commandBuffer);
+			app->Init();
 
-			fplVideoFlip();
+			while (fplWindowUpdate()) {
+				fplEvent ev;
+				while (fplPollEvent(&ev)) {
+					switch (ev.type) {
+						case fplEventType_Window:
+						{
+							switch (ev.window.type) {
+								case fplWindowEventType_Resized:
+								{
+									globalApp->Resize(ev.window.width, ev.window.height);
+								} break;
+							}
+						} break;
+						case fplEventType_Keyboard:
+						{
+							switch (ev.keyboard.type) {
+								case fplKeyboardEventType_KeyDown:
+								{
+								} break;
+								case fplKeyboardEventType_KeyUp:
+								{
+									globalApp->KeyUp(ev.keyboard.mappedKey);
+								} break;
+							}
+						} break;
+					}
+				}
 
-			auto endFrameClock = std::chrono::high_resolution_clock::now();
-			auto durationClock = endFrameClock - lastFrameClock;
-			lastFrameClock = endFrameClock;
-			uint64_t frameTimeInNanos = std::chrono::duration_cast<std::chrono::nanoseconds>(durationClock).count();
-			lastFrameTime = frameTimeInNanos / (float)1000000000;
+				Render::ResetCommandBuffer(globalApp->commandBuffer);
+				globalApp->UpdateAndRender(lastFrameTime, lastFrameCycles);
+				OpenGLDrawCommandBuffer(globalApp->commandBuffer);
 
-			uint64_t endCycles = __rdtsc();
-			lastFrameCycles = endCycles - lastCycles;
-			lastCycles = endCycles;
+				fplVideoFlip();
+
+				auto endFrameClock = std::chrono::high_resolution_clock::now();
+				auto durationClock = endFrameClock - lastFrameClock;
+				lastFrameClock = endFrameClock;
+				uint64_t frameTimeInNanos = std::chrono::duration_cast<std::chrono::nanoseconds>(durationClock).count();
+				lastFrameTime = frameTimeInNanos / (float)1000000000;
+
+				uint64_t endCycles = __rdtsc();
+				lastFrameCycles = endCycles - lastCycles;
+				lastCycles = endCycles;
+			}
+			fglUnloadOpenGL();
+			delete app;
 		}
 		fplPlatformRelease();
-		delete app;
 	}
 
 	return 0;
