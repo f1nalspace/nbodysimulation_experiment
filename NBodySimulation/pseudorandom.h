@@ -1,7 +1,7 @@
 #ifndef PSEUDORANDOM_H
 #define PSEUDORANDOM_H
 
-#include <final_platform_layer.hpp>
+#include <final_platform_layer.h>
 #include <stdint.h>
 
 #include "vecmath.h"

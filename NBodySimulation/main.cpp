@@ -2,7 +2,7 @@
 -------------------------------------------------------------------------------------------------------------------
 Multi-Threaded N-Body 2D Smoothed Particle Hydrodynamics Fluid Simulation based on paper "Particle-based Viscoelastic Fluid Simulation" by Simon Clavet, Philippe Beaudoin, and Pierre Poulin.
 
-Version 1.3
+Version 1.4
 
 A experiment about creating a two-way particle simulation in 4 different programming styles to see the difference in performance and maintainability.
 The core math is same for all implementations, including rendering and threading.
@@ -31,13 +31,16 @@ Notes:
 
 Todo:
 
-- Replace glew with final_opengl.hpp
+- Replace glew with final_dynamic_opengl.h
 - Migrate all GUI/Text rendering to imGUI
 - External particle forces
 - Add bar value labels on benchmark chart
 - Migrate to modern opengl 3.3+
 
 Version History:
+
+1.4:
+- Migrated to FPL 0.7.8.0 beta
 
 1.3:
 - Migrated to FPL 0.3.3 alpha
@@ -63,9 +66,9 @@ Copyright (c) 2017 Torsten Spaete
 */
 #include <GL\glew.h>
 
-#define FPL_AUTO_NAMESPACE 1
 #define FPL_IMPLEMENTATION
-#include <final_platform_layer.hpp>
+#define FPL_NO_AUDIO
+#include <final_platform_layer.h>
 
 #include <chrono>
 #include <stack>
@@ -466,40 +469,44 @@ static void OpenGLDrawCommandBuffer(Render::CommandBuffer *commandBuffer) {
 }
 
 int main(int argc, char **args) {
-	InitSettings settings = InitSettings();
+	fplSettings settings = fplMakeDefaultSettings();
 	settings.window.windowWidth = kWindowWidth;
 	settings.window.windowHeight = kWindowHeight;
-	if (InitPlatform(InitFlags::VideoOpenGL, settings)) {
+	settings.video.driver = fplVideoDriverType_OpenGL;
+	fplFormatAnsiString(settings.window.windowTitle, FPL_ARRAYCOUNT(settings.window.windowTitle), "NBody Simulation v%s", kAppVersion);
+	if (fplPlatformInit(fplInitFlags_Video, &settings)) {
 		Application *app = globalApp = new DemoApplication();
 		Window *window = app->GetWindow();
 
 		// @NOTE(final): Get window area at startup, because the titlebar and borders takes up space too.
-		WindowSize windowArea = GetWindowArea();
-		window->width = windowArea.width;
-		window->height = windowArea.height;
+		fplWindowSize windowArea;
+		if(fplGetWindowArea(&windowArea)) {
+			window->width = windowArea.width;
+			window->height = windowArea.height;
+		}
 
 		app->Init();
 
-		while (WindowUpdate()) {
-			Event ev;
-			while (PollWindowEvent(ev)) {
+		while (fplWindowUpdate()) {
+			fplEvent ev;
+			while (fplPollEvent(&ev)) {
 				switch (ev.type) {
-					case EventType::Window:
+					case fplEventType_Window:
 					{
 						switch (ev.window.type) {
-							case WindowEventType::Resized:
+							case fplWindowEventType_Resized:
 							{
 								globalApp->Resize(ev.window.width, ev.window.height);
 							} break;
 						}
 					} break;
-					case EventType::Keyboard:
+					case fplEventType_Keyboard:
 					{
 						switch (ev.keyboard.type) {
-							case KeyboardEventType::KeyDown:
+							case fplKeyboardEventType_KeyDown:
 							{
 							} break;
-							case KeyboardEventType::KeyUp:
+							case fplKeyboardEventType_KeyUp:
 							{
 								globalApp->KeyUp(ev.keyboard.mappedKey);
 							} break;
@@ -512,7 +519,7 @@ int main(int argc, char **args) {
 			globalApp->UpdateAndRender(lastFrameTime, lastFrameCycles);
 			OpenGLDrawCommandBuffer(globalApp->commandBuffer);
 
-			WindowFlip();
+			fplVideoFlip();
 
 			auto endFrameClock = std::chrono::high_resolution_clock::now();
 			auto durationClock = endFrameClock - lastFrameClock;
@@ -524,7 +531,7 @@ int main(int argc, char **args) {
 			lastFrameCycles = endCycles - lastCycles;
 			lastCycles = endCycles;
 		}
-		ReleasePlatform();
+		fplPlatformRelease();
 		delete app;
 	}
 

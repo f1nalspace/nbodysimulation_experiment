@@ -1,8 +1,7 @@
 #ifndef APP_H
 #define APP_H
 
-#define FPL_AUTO_NAMESPACE 1
-#include <final_platform_layer.hpp>
+#include <final_platform_layer.h>
 #include <string>
 #include <vector>
 
@@ -17,7 +16,7 @@
 
 const int kWindowWidth = 1280;
 const int kWindowHeight = 720;
-const char *kAppVersion = "1.1";
+const char *kAppVersion = "1.4";
 
 #define VERY_SHORT_BENCHMARK 0
 
@@ -65,8 +64,8 @@ struct Application {
 	void Resize(const int width, const int height);
 
 	virtual void Init() = 0;
-	virtual void KeyDown(const Key key) = 0;
-	virtual void KeyUp(const Key key) = 0;
+	virtual void KeyDown(const fplKey key) = 0;
+	virtual void KeyUp(const fplKey key) = 0;
 	virtual void UpdateAndRender(const float frametime, const uint64_t cycles) = 0;
 };
 
@@ -150,8 +149,8 @@ struct DemoApplication : public Application {
 	~DemoApplication();
 	void Init();
 	void UpdateAndRender(const float frameTime, const uint64_t cycles);
-	void KeyUp(const Key key);
-	void KeyDown(const Key key);
+	void KeyUp(const fplKey key);
+	void KeyDown(const fplKey key);
 	void LoadScenario(size_t scenarioIndex);
 };
 

@@ -1,14 +1,14 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <final_platform_layer.hpp>
+#include <final_platform_layer.h>
 #include <assert.h>
 #include <stdio.h>
 #include <algorithm>
 #include <intrin.h>
 #include <varargs.h>
 
-#define force_inline __forceinline
+#define force_inline fpl_force_inline
 
 template <typename T>
 inline T PointerToValue(void *ptr) {
@@ -51,14 +51,14 @@ inline std::string StringFormat(const std::string &format, const size_t bufferCo
 
 static uint8_t *LoadFileContent(const char *filename) {
 	uint8_t *result = nullptr;
-	fpl::files::FileHandle handle = fpl::files::OpenBinaryFile(filename);
-	if (handle.isValid) {
-		fpl::files::SetFilePosition32(handle, 0, fpl::files::FilePositionMode::End);
-		uint32_t fileSize = fpl::files::GetFilePosition32(handle);
-		fpl::files::SetFilePosition32(handle, 0, fpl::files::FilePositionMode::Beginning);
-		result = (uint8_t *)fpl::memory::MemoryAllocate(fileSize);
-		fpl::files::ReadFileBlock32(handle, fileSize, result, fileSize);
-		fpl::files::CloseFile(handle);
+	fplFileHandle handle;
+	if (fplOpenAnsiBinaryFile(filename, &handle)) {
+		fplSetFilePosition32(&handle, 0, fplFilePositionMode_End);
+		uint32_t fileSize = fplGetFilePosition32(&handle);
+		fplSetFilePosition32(&handle, 0, fplFilePositionMode_Beginning);
+		result = (uint8_t *)fplMemoryAllocate(fileSize);
+		fplReadFileBlock32(&handle, fileSize, result, fileSize);
+		fplCloseFile(&handle);
 	}
 	return(result);
 }

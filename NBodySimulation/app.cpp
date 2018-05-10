@@ -28,7 +28,8 @@ Application::Application() {
 	window = new Window();
 	commandBuffer = new Render::CommandBuffer();
 	char buffer[1024];
-	cpuName = fpl::hardware::GetProcessorName(buffer, FPL_ARRAYCOUNT(buffer));
+	fplGetProcessorName(buffer, FPL_ARRAYCOUNT(buffer));
+	cpuName = buffer;
 }
 
 Application::~Application() {
@@ -424,24 +425,24 @@ void DemoApplication::StopBenchmark() {
 	activeBenchmarkIteration = nullptr;
 }
 
-void DemoApplication::KeyDown(const Key key) {
+void DemoApplication::KeyDown(const fplKey key) {
 	if (!benchmarkActive) {
 		if (!benchmarkDone && simulationActive) {
 			bool doApplyingForces = false;
 			Vec2f applyForceDirection = Vec2f(0, 0);
 
-			if (key == Key::Key_Up) {
+			if (key == fplKey_Up) {
 				doApplyingForces = true;
 				applyForceDirection += Vec2f(0, 1);
-			} else if (key == Key::Key_Down) {
+			} else if (key == fplKey_Down) {
 				doApplyingForces = true;
 				applyForceDirection += Vec2f(0, -1);
 			}
 
-			if (key == Key::Key_Left) {
+			if (key == fplKey_Left) {
 				doApplyingForces = true;
 				applyForceDirection += Vec2f(-1, 0);
-			} else if (key == Key::Key_Right) {
+			} else if (key == fplKey_Right) {
 				doApplyingForces = true;
 				applyForceDirection += Vec2f(1, 0);
 			}
@@ -455,33 +456,33 @@ void DemoApplication::KeyDown(const Key key) {
 	}
 }
 
-void DemoApplication::KeyUp(const Key key) {
+void DemoApplication::KeyUp(const fplKey key) {
 	if (!benchmarkActive) {
 		if (benchmarkDone) {
-			if (key == Key::Key_Escape) {
+			if (key == fplKey_Escape) {
 				benchmarkDone = false;
 			}
 		} else {
-			if (key == Key::Key_Space) {
+			if (key == fplKey_Space) {
 				activeScenarioIndex = (activeScenarioIndex + 1) % FPL_ARRAYCOUNT(SPHScenarios);
 				LoadScenario(activeScenarioIndex);
-			} else if (key == Key::Key_P) {
+			} else if (key == fplKey_P) {
 				simulationActive = !simulationActive;
-			} else if (key == Key::Key_D) {
+			} else if (key == fplKey_D) {
 				demoIndex = (demoIndex + 1) % 4;
 				simulationActive = true;
 				LoadDemo(demoIndex);
-			} else if (key == Key::Key_R) {
+			} else if (key == fplKey_R) {
 				LoadScenario(activeScenarioIndex);
-			} else if (key == Key::Key_T && demo->IsMultiThreadingSupported()) {
+			} else if (key == fplKey_T && demo->IsMultiThreadingSupported()) {
 				multiThreadingActive = !multiThreadingActive;
 				demo->SetMultiThreading(multiThreadingActive);
-			} else if (key == Key::Key_B) {
+			} else if (key == fplKey_B) {
 				StartBenchmark();
 			}
 		}
 	} else {
-		if (key == Key::Key_Escape) {
+		if (key == fplKey_Escape) {
 			StopBenchmark();
 		}
 	}

@@ -1,7 +1,7 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#include <final_platform_layer.hpp>
+#include <final_platform_layer.h>
 #include <assert.h>
 #include <inttypes.h>
 #include <string.h>
@@ -15,13 +15,13 @@ struct MemoryBlock {
 inline MemoryBlock AllocateMemoryBlock(const size_t size) {
 	MemoryBlock result = {};
 	result.size = size;
-	result.base = fpl::memory::MemoryAllocate(size);
+	result.base = fplMemoryAllocate(size);
 	return(result);
 }
 
 inline void ReleaseMemoryBlock(MemoryBlock *block) {
 	if (block->base != nullptr) {
-		fpl::memory::MemoryFree(block->base);
+		fplMemoryFree(block->base);
 	}
 	*block = {};
 }
@@ -32,7 +32,7 @@ inline T *PushSize(MemoryBlock *block, const size_t size, const bool clear = tru
 	void *ptr = (void *)((uint8_t *)block->base + block->offset);
 	block->offset += size;
 	if (clear) {
-		fpl::memory::MemoryClear(ptr, size);
+		fplMemoryClear(ptr, size);
 	}
 	T *result = (T*)ptr;
 	return(result);
