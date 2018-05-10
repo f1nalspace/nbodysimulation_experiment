@@ -38,15 +38,14 @@ inline void Accumulate(T &value, T a) {
 	value += a;
 }
 
-inline std::string StringFormat(const std::string &format, const size_t bufferCount, ...) {
-	std::string strBuf;
-	strBuf.resize(bufferCount);
+inline std::string StringFormat(const char *format, ...) {
+	char buffer[1024];
 	va_list vaList;
-	va_start(vaList, bufferCount);
-	int characterCount = vsprintf_s((char *)strBuf.c_str(), bufferCount, format.c_str(), vaList);
+	va_start(vaList, format);
+	fplFormatAnsiStringArgs(buffer, FPL_ARRAYCOUNT(buffer), format, vaList);
 	va_end(vaList);
-	strBuf.resize(characterCount);
-	return(strBuf);
+	std::string result = buffer;
+	return(result);
 }
 
 static uint8_t *LoadFileContent(const char *filename) {

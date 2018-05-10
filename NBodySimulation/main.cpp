@@ -41,6 +41,8 @@ Version History:
 1.4:
 - Migrated to FPL 0.7.8.0 beta
 - Replaced GLEW with final_dynamic_opengl.h
+- Replaced all std threading stuff with FPL equivalents
+- Replaced sprintf_s to fplFormatAnsiString
 
 1.3:
 - Migrated to FPL 0.3.3 alpha

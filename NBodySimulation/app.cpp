@@ -198,9 +198,9 @@ void DemoApplication::RenderBenchmark(OSDState *osdState, const float left, floa
 
 	char osdBuffer[256];
 	DemoStatistics *firstDemoStat = &demoStats[0];
-	sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Benchmark done, Scenario: %llu, Frames: %llu, Iterations: %llu", (firstDemoStat->scenarioIndex + 1), firstDemoStat->frameCount, firstDemoStat->iterationCount);
+	fplFormatAnsiString(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Benchmark done, Scenario: %llu, Frames: %llu, Iterations: %llu", (firstDemoStat->scenarioIndex + 1), firstDemoStat->frameCount, firstDemoStat->iterationCount);
 	DrawOSDLine(osdState, osdBuffer);
-	sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "CPU: %s", cpuName.c_str());
+	fplFormatAnsiString(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "CPU: %s", cpuName.c_str());
 	DrawOSDLine(osdState, osdBuffer);
 }
 
@@ -297,58 +297,58 @@ void DemoApplication::UpdateAndRender(const float frameTime, const uint64_t cycl
 			RenderBenchmark(&osdState, 0.0f, 0.0f, (float)w, (float)h);
 		} else {
 			size_t scenarioCount = FPL_ARRAYCOUNT(SPHScenarios);
-			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Scenario: [%llu / %llu] %s (Space)", (activeScenarioIndex + 1), scenarioCount, activeScenarioName.c_str());
+			fplFormatAnsiString(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Scenario: [%llu / %llu] %s (Space)", (activeScenarioIndex + 1), scenarioCount, activeScenarioName.c_str());
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Demo: %s (D)", demoTitle.c_str());
+			fplFormatAnsiString(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Demo: %s (D)", demoTitle.c_str());
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Start benchmark (B)");
+			fplFormatAnsiString(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Start benchmark (B)");
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Simulation: %s (P)", (simulationActive ? "yes" : "no"));
+			fplFormatAnsiString(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Simulation: %s (P)", (simulationActive ? "yes" : "no"));
 			DrawOSDLine(&osdState, osdBuffer);
 			if (demo->IsMultiThreadingSupported()) {
-				sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Multithreading: %s, %llu threads (T)", (demo->IsMultiThreading() ? "yes" : "no"), demo->GetWorkerThreadCount());
+				fplFormatAnsiString(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Multithreading: %s, %llu threads (T)", (demo->IsMultiThreading() ? "yes" : "no"), demo->GetWorkerThreadCount());
 			} else {
-				sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Multithreading: not supported");
+				fplFormatAnsiString(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Multithreading: not supported");
 			}
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Reset (R)");
+			fplFormatAnsiString(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Reset (R)");
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Frame time: %f ms, Cycles: %llu", (frameTime * 1000.0f), cycles);
+			fplFormatAnsiString(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Frame time: %f ms, Cycles: %llu", (frameTime * 1000.0f), cycles);
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Particles: %llu", demo->GetParticleCount());
+			fplFormatAnsiString(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Particles: %llu", demo->GetParticleCount());
 			DrawOSDLine(&osdState, osdBuffer);
 
-			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Stats:");
+			fplFormatAnsiString(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Stats:");
 			DrawOSDLine(&osdState, osdBuffer);
 			const SPHStatistics &stats = demo->GetStats();
-			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tMin/Max cell particle count: %llu / %llu", stats.minCellParticleCount, stats.maxCellParticleCount);
+			fplFormatAnsiString(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tMin/Max cell particle count: %llu / %llu", stats.minCellParticleCount, stats.maxCellParticleCount);
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tMin/Max particle neighbor count: %llu / %llu", stats.minParticleNeighborCount, stats.maxParticleNeighborCount);
+			fplFormatAnsiString(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tMin/Max particle neighbor count: %llu / %llu", stats.minParticleNeighborCount, stats.maxParticleNeighborCount);
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tTime integration: %f ms", stats.time.integration);
+			fplFormatAnsiString(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tTime integration: %f ms", stats.time.integration);
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tTime viscosity forces: %f ms", stats.time.viscosityForces);
+			fplFormatAnsiString(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tTime viscosity forces: %f ms", stats.time.viscosityForces);
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tTime predict: %f ms", stats.time.predict);
+			fplFormatAnsiString(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tTime predict: %f ms", stats.time.predict);
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tTime update grid: %f ms", stats.time.updateGrid);
+			fplFormatAnsiString(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tTime update grid: %f ms", stats.time.updateGrid);
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tTime neighbor search: %f ms", stats.time.neighborSearch);
+			fplFormatAnsiString(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tTime neighbor search: %f ms", stats.time.neighborSearch);
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tTime density and pressure: %f ms", stats.time.densityAndPressure);
+			fplFormatAnsiString(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tTime density and pressure: %f ms", stats.time.densityAndPressure);
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tTime delta positions: %f ms", stats.time.deltaPositions);
+			fplFormatAnsiString(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tTime delta positions: %f ms", stats.time.deltaPositions);
 			DrawOSDLine(&osdState, osdBuffer);
-			sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tTime collisions: %f ms", stats.time.collisions);
+			fplFormatAnsiString(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "\tTime collisions: %f ms", stats.time.collisions);
 			DrawOSDLine(&osdState, osdBuffer);
 		}
 	} else {
-		sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Benchmarking - Demo %llu of %llu, Scenario: %s (Escape)", demoIndex + 1, (size_t)4, activeScenarioName.c_str());
+		fplFormatAnsiString(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Benchmarking - Demo %llu of %llu, Scenario: %s (Escape)", demoIndex + 1, (size_t)4, activeScenarioName.c_str());
 		DrawOSDLine(&osdState, osdBuffer);
-		sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Iteration %llu of %llu", benchmarkIterations.size(), kBenchmarkIterationCount);
+		fplFormatAnsiString(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Iteration %llu of %llu", benchmarkIterations.size(), kBenchmarkIterationCount);
 		DrawOSDLine(&osdState, osdBuffer);
 		assert(activeBenchmarkIteration != nullptr);
-		sprintf_s(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Frame %llu of %llu", activeBenchmarkIteration->frames.size() + 1, kBenchmarkFrameCount);
+		fplFormatAnsiString(osdBuffer, FPL_ARRAYCOUNT(osdBuffer), "Frame %llu of %llu", activeBenchmarkIteration->frames.size() + 1, kBenchmarkFrameCount);
 		DrawOSDLine(&osdState, osdBuffer);
 
 		const char *bigText = "Benchmarking";

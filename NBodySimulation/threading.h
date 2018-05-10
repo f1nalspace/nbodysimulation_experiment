@@ -1,17 +1,14 @@
 #ifndef THREADING_H
 #define THREADING_H
 
-// @TODO(final): Migrate threadpool to 100% FPL!
+#include <assert.h>
+#include <functional>
+#include <deque> // @TODO(final): Replace std::deque
+#include <final_platform_layer.h>
 
-#include <algorithm>
-#include <thread>
-#include <mutex>
-#include <condition_variable>
-#include <vector>
-#include <deque>
-#include <atomic>
+// @TODO(final): Allow non-lambda functions as well
+typedef std::function<void(const size_t startIndex, const size_t endIndex, const float deltaTime)> thread_pool_task_function;
 
-typedef std::function<void(const size_t, const size_t, const float)> thread_pool_task_function;
 struct ThreadPoolTask {
 	size_t startIndex;
 	size_t endIndex;
@@ -20,31 +17,63 @@ struct ThreadPoolTask {
 	thread_pool_task_function func;
 };
 
+constexpr size_t MAX_THREADPOOL_THREAD_COUNT = 16;
+struct ThreadPoolState {
+	fplThreadHandle *threads[MAX_THREADPOOL_THREAD_COUNT];
+	size_t threadCount;
+	fplMutexHandle queueMutex;
+	fplConditionVariable queueCondition;
+	std::deque<ThreadPoolTask> queue;
+	volatile uint64_t pendingCount;
+	volatile bool stopped;
+};
+
+inline void ThreadPoolWorkerThreadProc(const fplThreadHandle *thread, void *data) {
+	ThreadPoolState *state = static_cast<ThreadPoolState *>(data);
+	ThreadPoolTask task;
+	while (true) {
+		fplMutexLock(&state->queueMutex);
+		while (true) {
+			if (!state->queue.empty()) break;
+			if (state->stopped) return;
+			fplConditionWait(&state->queueCondition, &state->queueMutex, FPL_TIMEOUT_INFINITE);
+		}
+		task = state->queue.front();
+		state->queue.pop_front();
+		fplMutexUnlock(&state->queueMutex);
+
+		task.func(task.startIndex, task.endIndex, task.deltaTime);
+		fplAtomicAddU64(&state->pendingCount, -1);
+	}
+}
+
 class ThreadPool {
 private:
-	bool _stopped;
-	std::vector<std::thread> _threads;
-	std::atomic_size_t _pendingCount;
-	std::deque<ThreadPoolTask> _queue;
-	std::mutex _queueMutex;
-	std::condition_variable _queueSignal;
+	ThreadPoolState _state;
 public:
-	ThreadPool(const size_t threadCount = std::thread::hardware_concurrency()) :
-		_stopped(false) {
-		_pendingCount.store(0, std::memory_order_relaxed);
-		_threads.reserve(threadCount);
+	ThreadPool(const size_t threadCount) {
+		assert(threadCount <= MAX_THREADPOOL_THREAD_COUNT);
+		_state = {};
+		_state.threadCount = threadCount;
+		fplMutexInit(&_state.queueMutex);
+		fplConditionInit(&_state.queueCondition);
 		for (size_t workerIndex = 0; workerIndex < threadCount; ++workerIndex) {
-			_threads.push_back(std::thread(&ThreadPool::WorkerThreadProc, this));
+			_state.threads[workerIndex] = fplThreadCreate(ThreadPoolWorkerThreadProc, &_state);
 		}
 	}
+	ThreadPool() :
+		ThreadPool(ThreadPool::GetConcurrencyThreadCount()) {
+	}
 	~ThreadPool() {
-		std::unique_lock<std::mutex> lock(_queueMutex);
-		_stopped = true;
-		_queueSignal.notify_all();
-		lock.unlock();
-		for (size_t workerIndex = 0; workerIndex < _threads.size(); ++workerIndex) {
-			_threads[workerIndex].join();
-		}
+		fplMutexLock(&_state.queueMutex);
+		_state.stopped = true;
+		fplConditionBroadcast(&_state.queueCondition);
+		fplMutexUnlock(&_state.queueMutex);
+
+		fplThreadWaitForAll(_state.threads, _state.threadCount, FPL_TIMEOUT_INFINITE);
+
+		fplConditionDestroy(&_state.queueCondition);
+		fplMutexDestroy(&_state.queueMutex);
 	}
 
 	ThreadPool(const ThreadPool&) = delete;
@@ -53,63 +82,48 @@ public:
 	ThreadPool& operator=(ThreadPool&&) = delete;
 
 	inline void AddTask(const ThreadPoolTask &task) {
-		{
-			std::unique_lock<std::mutex> lock(_queueMutex);
-			_queue.push_back(task);
-		}
-		_pendingCount++;
+		_state.queue.push_back(task);
 	}
 
 	inline void WaitUntilDone() {
-		while (_pendingCount.load(std::memory_order_relaxed) > 0) {
-			std::this_thread::yield();
+		fplMutexLock(&_state.queueMutex);
+		fplConditionBroadcast(&_state.queueCondition);
+		fplMutexUnlock(&_state.queueMutex);
+		while (fplAtomicLoadU64(&_state.pendingCount) > 0) {
+			// @TODO(final): Use yield-thread instead (SwitchToThread on win32)
+			fplThreadSleep(0);
 		}
 	}
 
-	inline void WorkerThreadProc() {
-		ThreadPoolTask group;
-		std::unique_lock<std::mutex> lock(_queueMutex, std::defer_lock);
 
-		while (true) {
-			lock.lock();
-			while (true) {
-				if (!_queue.empty()) break;
-				if (_stopped) return;
-				_queueSignal.wait(lock);
-			}
-			group = _queue.front();
-			_queue.pop_front();
-			lock.unlock();
 
-			group.func(group.startIndex, group.endIndex, group.deltaTime);
-			_pendingCount.fetch_sub(1, std::memory_order_relaxed);
-		}
-	}
-
-	inline void CreateTasks(const size_t itemCount, const thread_pool_task_function &function, const float deltaTime) {
+	inline void CreateTasks(const size_t itemCount, const thread_pool_task_function &func, const float deltaTime) {
 		if (itemCount == 0) return;
 
-		const size_t threads_size = _threads.size();
-		const size_t itemsPerTask = std::max((size_t)1, itemCount / threads_size);
+		const size_t threads_size = _state.threadCount;
+		const size_t itemsPerTask = FPL_MAX((size_t)1, itemCount / threads_size);
 
-		ThreadPoolTask task = {};
-		task.func = function;
-		task.deltaTime = deltaTime;
-
-		std::lock_guard<std::mutex> lock(_queueMutex);
+		fplMutexLock(&_state.queueMutex);
 		size_t tasks_added = 0;
 		for (size_t itemIndex = 0; itemIndex < itemCount; itemIndex += itemsPerTask, ++tasks_added) {
+			ThreadPoolTask task = {};
+			task.func = func;
+			task.deltaTime = deltaTime;
 			task.startIndex = itemIndex;
 			task.endIndex = std::min(itemIndex + itemsPerTask - 1, itemCount - 1);
-			_queue.push_back(task);
+			AddTask(task);
 		}
-		_queueSignal.notify_all();
-
-		_pendingCount.fetch_add(tasks_added, std::memory_order_relaxed);
+		fplAtomicAddU64(&_state.pendingCount, tasks_added);
+		fplMutexUnlock(&_state.queueMutex);
 	}
 
 	inline size_t GetThreadCount() {
-		return _threads.size();
+		return _state.threadCount;
+	}
+
+	static size_t GetConcurrencyThreadCount() {
+		size_t count = fplGetProcessorCoreCount();
+		return FPL_MAX(count, 1);
 	}
 };
 

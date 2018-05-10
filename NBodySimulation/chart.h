@@ -133,7 +133,7 @@ struct Chart {
 		size_t tickCount = (size_t)(yAxis.range / yAxis.tickSpacing);
 
 		float axisMargin = 10;
-		std::string maxAxisLabel = StringFormat(axisFormat, (size_t)256, yAxis.max);
+		std::string maxAxisLabel = StringFormat(axisFormat.c_str(), yAxis.max);
 		float maxAxisTextWidth = GetTextWidth(maxAxisLabel.c_str(), (uint32_t)maxAxisLabel.size(), font, tickLabelFontHeight);
 		float yAxisWidth = maxAxisTextWidth + axisMargin;
 
@@ -180,7 +180,7 @@ struct Chart {
 		for (int tickIndex = 0; tickIndex <= tickCount; ++tickIndex) {
 			double tickValue = yAxis.min + yAxis.tickSpacing * (double)tickIndex;
 			float tickHeight = yAxis.MapValueToPosition(tickValue, chartHeight);
-			std::string tickLabel = StringFormat(axisFormat, 256, tickValue);
+			std::string tickLabel = StringFormat(axisFormat.c_str(), tickValue);
 			float tickLabelWidth = GetTextWidth(tickLabel.c_str(), (uint32_t)tickLabel.size(), font, tickLabelFontHeight);
 			float tickY = chartOriginY + tickHeight - tickLabelFontHeight * 0.5f;
 			float tickX = chartOriginX - axisMargin - tickLabelWidth;
