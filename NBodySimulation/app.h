@@ -16,7 +16,7 @@
 
 const int kWindowWidth = 1280;
 const int kWindowHeight = 720;
-const char *kAppVersion = "1.4";
+const char *kAppVersion = "1.4.1";
 
 #define VERY_SHORT_BENCHMARK 1
 

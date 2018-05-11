@@ -38,6 +38,12 @@ Todo:
 
 Version History:
 
+1.4.1:
+
+- Migrated to FPL 0.8.0.0 beta
+- Migrated to FGL 0.3.2.0 beta
+- Use fplThreadYield() instead of fplThreadSleep()
+
 1.4:
 - Migrated to FPL 0.7.8.0 beta
 - Replaced GLEW with final_dynamic_opengl.h

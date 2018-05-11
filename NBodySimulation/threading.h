@@ -90,8 +90,7 @@ public:
 		fplConditionBroadcast(&_state.queueCondition);
 		fplMutexUnlock(&_state.queueMutex);
 		while (fplAtomicLoadU64(&_state.pendingCount) > 0) {
-			// @TODO(final): Use yield-thread instead (SwitchToThread on win32)
-			fplThreadSleep(0);
+			fplThreadYield();
 		}
 	}
 
