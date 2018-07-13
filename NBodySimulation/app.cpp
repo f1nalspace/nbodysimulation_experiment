@@ -44,7 +44,6 @@ void Application::Resize(const int width, const int height) {
 
 DemoApplication::DemoApplication() :
 	Application(),
-	externalForcesApplying(false),
 	multiThreadingActive(true),
 	activeScenarioIndex(0),
 	simulationActive(true),
@@ -215,7 +214,12 @@ void DemoApplication::UpdateAndRender(const float frameTime, const uint64_t cycl
 	Render::PushViewport(commandBuffer, 0, 0, w, h);
 
 	if (simulationActive) {
-		externalForcesApplying = false;
+		float strenth = 10.0f;
+		bool externalForcesApplying = false;
+		Vec2f applyForceDirection = Vec2f();
+		if (externalForcesApplying) {
+			demo->AddExternalForces(applyForceDirection * strenth);
+		}
 
 		float updateTime = 0.0f;
 		{
@@ -428,30 +432,7 @@ void DemoApplication::StopBenchmark() {
 void DemoApplication::KeyDown(const fplKey key) {
 	if (!benchmarkActive) {
 		if (!benchmarkDone && simulationActive) {
-			bool doApplyingForces = false;
-			Vec2f applyForceDirection = Vec2f(0, 0);
-
-			if (key == fplKey_Up) {
-				doApplyingForces = true;
-				applyForceDirection += Vec2f(0, 1);
-			} else if (key == fplKey_Down) {
-				doApplyingForces = true;
-				applyForceDirection += Vec2f(0, -1);
-			}
-
-			if (key == fplKey_Left) {
-				doApplyingForces = true;
-				applyForceDirection += Vec2f(-1, 0);
-			} else if (key == fplKey_Right) {
-				doApplyingForces = true;
-				applyForceDirection += Vec2f(1, 0);
-			}
-
-			if (doApplyingForces) {
-				float strenth = 10.0f;
-				externalForcesApplying = true;
-				demo->AddExternalForces(applyForceDirection * strenth);
-			}
+			keyStates[key] = 1;
 		}
 	}
 }
@@ -463,6 +444,7 @@ void DemoApplication::KeyUp(const fplKey key) {
 				benchmarkDone = false;
 			}
 		} else {
+			keyStates[key] = 0;
 			if (key == fplKey_Space) {
 				activeScenarioIndex = (activeScenarioIndex + 1) % FPL_ARRAYCOUNT(SPHScenarios);
 				LoadScenario(activeScenarioIndex);

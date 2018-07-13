@@ -16,7 +16,7 @@
 
 const int kWindowWidth = 1280;
 const int kWindowHeight = 720;
-const char *kAppVersion = "1.4.1";
+const char *kAppVersion = "1.4.2";
 
 #define VERY_SHORT_BENCHMARK 1
 
@@ -117,6 +117,7 @@ struct DemoApplication : public Application {
 	std::vector<BenchmarkIteration> benchmarkIterations;
 	BenchmarkIteration *activeBenchmarkIteration;
 	size_t benchmarkFrameCount;
+	int keyStates[256];
 
 	std::vector<DemoStatistics> demoStats;
 
@@ -128,7 +129,6 @@ struct DemoApplication : public Application {
 	std::string activeScenarioName;
 
 	bool multiThreadingActive;
-	bool externalForcesApplying;
 
 	Font osdFont;
 	Render::TextureHandle osdFontTexture;

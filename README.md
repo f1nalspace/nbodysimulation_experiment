@@ -13,7 +13,7 @@ The core math is same for all implementations, including rendering and threading
 
 ## How to compile:
 
-Compile main.cpp only and link with opengl, freeglut and glew.
+Compile main.cpp with C++/11 compiler and link to kernel32.lib or ld.so and thats it.
 
 ## Benchmark:
 

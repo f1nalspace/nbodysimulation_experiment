@@ -38,6 +38,9 @@ Todo:
 
 Version History:
 
+1.4.2:
+- Migrated to FPL 0.8.3.0 beta
+
 1.4.1:
 
 - Migrated to FPL 0.8.0.0 beta
@@ -513,12 +516,13 @@ int main(int argc, char **args) {
 						case fplEventType_Keyboard:
 						{
 							switch (ev.keyboard.type) {
-								case fplKeyboardEventType_KeyDown:
+								case fplKeyboardEventType_Button:
 								{
-								} break;
-								case fplKeyboardEventType_KeyUp:
-								{
-									globalApp->KeyUp(ev.keyboard.mappedKey);
+									if (ev.keyboard.buttonState == fplButtonState_Release) {
+										globalApp->KeyUp(ev.keyboard.mappedKey);
+									} else if (ev.keyboard.buttonState >= fplButtonState_Press) {
+										globalApp->KeyDown(ev.keyboard.mappedKey);
+									}
 								} break;
 							}
 						} break;
