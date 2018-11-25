@@ -42,7 +42,7 @@ inline std::string StringFormat(const char *format, ...) {
 	char buffer[1024];
 	va_list vaList;
 	va_start(vaList, format);
-	fplFormatAnsiStringArgs(buffer, FPL_ARRAYCOUNT(buffer), format, vaList);
+	fplFormatStringArgs(buffer, fplArrayCount(buffer), format, vaList);
 	va_end(vaList);
 	std::string result = buffer;
 	return(result);
@@ -51,7 +51,7 @@ inline std::string StringFormat(const char *format, ...) {
 static uint8_t *LoadFileContent(const char *filename) {
 	uint8_t *result = nullptr;
 	fplFileHandle handle;
-	if (fplOpenAnsiBinaryFile(filename, &handle)) {
+	if (fplOpenBinaryFile(filename, &handle)) {
 		fplSetFilePosition32(&handle, 0, fplFilePositionMode_End);
 		uint32_t fileSize = fplGetFilePosition32(&handle);
 		fplSetFilePosition32(&handle, 0, fplFilePositionMode_Beginning);

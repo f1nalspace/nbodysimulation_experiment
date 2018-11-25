@@ -38,6 +38,9 @@ Todo:
 
 Version History:
 
+1.4.3:
+- Migrated to FPL 0.9.2.0 beta
+
 1.4.2:
 - Migrated to FPL 0.8.3.0 beta
 
@@ -485,7 +488,7 @@ int main(int argc, char **args) {
 	settings.window.windowWidth = kWindowWidth;
 	settings.window.windowHeight = kWindowHeight;
 	settings.video.driver = fplVideoDriverType_OpenGL;
-	fplFormatAnsiString(settings.window.windowTitle, FPL_ARRAYCOUNT(settings.window.windowTitle), "NBody Simulation v%s", kAppVersion);
+	fplFormatString(settings.window.windowTitle, fplArrayCount(settings.window.windowTitle), "NBody Simulation v%s", kAppVersion);
 	if (fplPlatformInit(fplInitFlags_Video, &settings)) {
 		if (fglLoadOpenGL(true)) {
 			Application *app = globalApp = new DemoApplication();
@@ -509,7 +512,7 @@ int main(int argc, char **args) {
 							switch (ev.window.type) {
 								case fplWindowEventType_Resized:
 								{
-									globalApp->Resize(ev.window.width, ev.window.height);
+									globalApp->Resize(ev.window.size.width, ev.window.size.height);
 								} break;
 							}
 						} break;

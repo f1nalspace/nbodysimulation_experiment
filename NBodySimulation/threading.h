@@ -43,7 +43,7 @@ inline void ThreadPoolWorkerThreadProc(const fplThreadHandle *thread, void *data
 		fplMutexUnlock(&state->queueMutex);
 
 		task.func(task.startIndex, task.endIndex, task.deltaTime);
-		fplAtomicAddU64(&state->pendingCount, -1);
+		fplAtomicFetchAndAddU64(&state->pendingCount, -1);
 	}
 }
 
@@ -100,7 +100,7 @@ public:
 		if (itemCount == 0) return;
 
 		const size_t threads_size = _state.threadCount;
-		const size_t itemsPerTask = FPL_MAX((size_t)1, itemCount / threads_size);
+		const size_t itemsPerTask = fplMax((size_t)1, itemCount / threads_size);
 
 		fplMutexLock(&_state.queueMutex);
 		size_t tasks_added = 0;
@@ -112,7 +112,7 @@ public:
 			task.endIndex = std::min(itemIndex + itemsPerTask - 1, itemCount - 1);
 			AddTask(task);
 		}
-		fplAtomicAddU64(&_state.pendingCount, tasks_added);
+		fplAtomicFetchAndAddU64(&_state.pendingCount, tasks_added);
 		fplMutexUnlock(&_state.queueMutex);
 	}
 
@@ -122,7 +122,7 @@ public:
 
 	static size_t GetConcurrencyThreadCount() {
 		size_t count = fplGetProcessorCoreCount();
-		return FPL_MAX(count, 1);
+		return fplMax(count, 1);
 	}
 };
 
