@@ -183,6 +183,7 @@
     <ClInclude Include="demo3.h" />
     <ClInclude Include="demo4.h" />
     <ClInclude Include="font.h" />
+    <ClInclude Include="fonts.h" />
     <ClInclude Include="memory.h" />
     <ClInclude Include="pseudorandom.h" />
     <ClInclude Include="render.h" />

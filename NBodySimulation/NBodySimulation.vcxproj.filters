@@ -23,6 +23,7 @@
     <ClInclude Include="font.h" />
     <ClInclude Include="threading.h" />
     <ClInclude Include="memory.h" />
+    <ClInclude Include="fonts.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="demo2.cpp" />
