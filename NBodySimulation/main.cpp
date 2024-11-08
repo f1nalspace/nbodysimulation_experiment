@@ -485,10 +485,10 @@ static void OpenGLDrawCommandBuffer(Render::CommandBuffer *commandBuffer) {
 
 int main(int argc, char **args) {
 	fplSettings settings = fplMakeDefaultSettings();
-	settings.window.windowWidth = kWindowWidth;
-	settings.window.windowHeight = kWindowHeight;
-	settings.video.driver = fplVideoDriverType_OpenGL;
-	fplFormatString(settings.window.windowTitle, fplArrayCount(settings.window.windowTitle), "NBody Simulation v%s", kAppVersion);
+	settings.window.windowSize.width = kWindowWidth;
+	settings.window.windowSize.height = kWindowHeight;
+	settings.video.backend = fplVideoBackendType_OpenGL;
+	fplStringFormat(settings.window.title, fplArrayCount(settings.window.title), "NBody Simulation v%s", kAppVersion);
 	if (fplPlatformInit(fplInitFlags_Video, &settings)) {
 		if (fglLoadOpenGL(true)) {
 			Application *app = globalApp = new DemoApplication();
@@ -496,7 +496,7 @@ int main(int argc, char **args) {
 
 			// @NOTE(final): Get window area at startup, because the titlebar and borders takes up space too.
 			fplWindowSize windowArea;
-			if (fplGetWindowArea(&windowArea)) {
+			if (fplGetWindowSize(&windowArea)) {
 				window->width = windowArea.width;
 				window->height = windowArea.height;
 			}
