@@ -10,7 +10,9 @@
 #include "pseudorandom.h"
 #include "chart.h"
 #include "font.h"
+#include "fonts.h"
 
+// Force include all the demo translation files here, because we want to limit the translation file to a maximum of one (faster compile times)
 #include "demo1.cpp"
 #include "demo2.cpp"
 #include "demo3.cpp"
@@ -60,14 +62,17 @@ DemoApplication::DemoApplication() :
 void DemoApplication::Init() {
 	LoadDemo(demoIndex);
 
-	// @TODO: The font file will only work in windows!
 	uint32_t charRange[2] = { 33, 127 };
 	uint32_t atlasSize[2] = { 512, 256 };
 	bool isPremultiplied = false;
 	bool isTopDown = true;
-	char *fontFile = "C:/Windows/Fonts/arial.ttf.";
-	osdFont = LoadFont(fontFile, 0, 50.0f, charRange[0], charRange[1], atlasSize[0], atlasSize[1]);
-	chartFont = LoadFont(fontFile, 0, 24.0f, charRange[0], charRange[1], atlasSize[0], atlasSize[1]);
+
+	FontResource fontRes = FontResources::Arimo;
+
+	osdFont = LoadFontFromBuffer(fontRes.data, fontRes.dataSize, 0, 50.0f, charRange[0], charRange[1], atlasSize[0], atlasSize[1]);
+
+	chartFont = LoadFontFromBuffer(fontRes.data, fontRes.dataSize, 0, 24.0f, charRange[0], charRange[1], atlasSize[0], atlasSize[1]);
+
 	Render::AllocateTexture(commandBuffer, osdFont.atlasWidth, osdFont.atlasHeight, 1, osdFont.atlasAlphaBitmap, isTopDown, isPremultiplied, &osdFontTexture);
 	Render::AllocateTexture(commandBuffer, chartFont.atlasWidth, chartFont.atlasHeight, 1, chartFont.atlasAlphaBitmap, isTopDown, isPremultiplied, &chartFontTexture);
 
