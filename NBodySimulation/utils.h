@@ -48,18 +48,34 @@ inline std::string StringFormat(const char *format, ...) {
 	return(result);
 }
 
-static uint8_t *LoadFileContent(const char *filename) {
-	uint8_t *result = nullptr;
-	fplFileHandle handle;
-	if (fplFileOpenBinary(filename, &handle)) {
-		fplFileSetPosition32(&handle, 0, fplFilePositionMode_End);
-		uint32_t fileSize = fplFileGetPosition32(&handle);
-		fplFileSetPosition32(&handle, 0, fplFilePositionMode_Beginning);
-		result = (uint8_t *)fplMemoryAllocate(fileSize);
-		fplFileReadBlock32(&handle, fileSize, result, fileSize);
-		fplFileClose(&handle);
+struct FileContent {
+	uint8_t *data;
+	size_t size;
+
+	static FileContent LoadFromFile(const char *filename) {
+		FileContent result = {};
+		fplFileHandle handle;
+		if (fplFileOpenBinary(filename, &handle)) {
+			fplFileSetPosition32(&handle, 0, fplFilePositionMode_End);
+			uint32_t fileSize = fplFileGetPosition32(&handle);
+			fplFileSetPosition32(&handle, 0, fplFilePositionMode_Beginning);
+			uint8_t *data = (uint8_t *)fplMemoryAllocate(fileSize);
+			fplFileReadBlock32(&handle, fileSize, data, fileSize);
+			fplFileClose(&handle);
+			result.data = data;
+			result.size = fileSize;
+		}
+		return(result);
 	}
-	return(result);
-}
+
+	void Release() {
+		if (data != nullptr) {
+			fplMemoryFree(data);
+			data = nullptr;
+		}
+	}
+};
+
+
 
 #endif

@@ -91,18 +91,17 @@ inline float GetTextWidth(const char *text, const uint32_t textLen, Font *font, 
 	return(result);
 }
 
-static Font LoadFont(const char *filename, const uint32_t fontIndex, const float fontSize, uint32_t firstChar, uint32_t lastChar, uint32_t atlasWidth, uint32_t atlasHeight) {
+static Font LoadFontFromBuffer(const uint8_t *ttfData, const size_t ttfSize, const uint32_t fontIndex, const float fontSize, uint32_t firstChar, uint32_t lastChar, uint32_t atlasWidth, uint32_t atlasHeight) {
 #define BETTER_QUALITY 0
 
 	Font result = {};
 
-	uint8_t *ttfBuffer = LoadFileContent(filename);
-	if (ttfBuffer != nullptr) {
+	if (ttfData != nullptr && ttfSize > 0) {
 
 		stbtt_fontinfo fontInfo = {};
-		int fontOffset = stbtt_GetFontOffsetForIndex(ttfBuffer, fontIndex);
+		int fontOffset = stbtt_GetFontOffsetForIndex(ttfData, fontIndex);
 
-		if (stbtt_InitFont(&fontInfo, ttfBuffer, fontOffset)) {
+		if (stbtt_InitFont(&fontInfo, ttfData, fontOffset)) {
 			uint32_t charCount = (lastChar - firstChar) + 1;
 			uint8_t *atlasAlphaBitmap = (uint8_t *)fplMemoryAllocate(atlasWidth * atlasHeight);
 #if BETTER_QUALITY
@@ -121,11 +120,11 @@ static Font LoadFont(const char *filename, const uint32_t fontIndex, const float
 			};
 			stbtt_PackBegin(&packContext, atlasAlphaBitmap, atlasWidth, atlasHeight, atlasWidth, 0, 0);
 			stbtt_PackSetOversampling(&packContext, 1, 1);
-			stbtt_PackFontRanges(&packContext, ttfBuffer, fontIndex, ranges[0], 1);
+			stbtt_PackFontRanges(&packContext, ttfData, fontIndex, ranges[0], 1);
 			stbtt_PackEnd(&packContext);
 #else
 			stbtt_bakedchar *packedChars = (stbtt_bakedchar *)fplMemoryAllocate(charCount * sizeof(stbtt_bakedchar));
-			stbtt_BakeFontBitmap(ttfBuffer, fontOffset, fontSize, atlasAlphaBitmap, atlasWidth, atlasHeight, firstChar, charCount, packedChars);
+			stbtt_BakeFontBitmap(ttfData, fontOffset, fontSize, atlasAlphaBitmap, atlasWidth, atlasHeight, firstChar, charCount, packedChars);
 #endif
 
 			// Get metrics
@@ -171,7 +170,7 @@ static Font LoadFont(const char *filename, const uint32_t fontIndex, const float
 				stbtt_bakedchar *sourceInfo = packedChars + glyphIndex;
 #endif
 
-				FontGlyph * destInfo = glyphs + glyphIndex;
+				FontGlyph *destInfo = glyphs + glyphIndex;
 				*destInfo = {};
 				destInfo->charCode = firstChar + glyphIndex;
 
@@ -247,11 +246,19 @@ static Font LoadFont(const char *filename, const uint32_t fontIndex, const float
 			result.atlasWidth = atlasWidth;
 			result.atlasHeight = atlasHeight;
 		}
-
-		fplMemoryFree(ttfBuffer);
 	}
 
 	return(result);
+}
+
+static Font LoadFontFromFile(const char *filename, const uint32_t fontIndex, const float fontSize, uint32_t firstChar, uint32_t lastChar, uint32_t atlasWidth, uint32_t atlasHeight) {
+	Font result = {};
+	FileContent content = FileContent::LoadFromFile(filename);
+	if (content.data != nullptr) {
+		result = LoadFontFromBuffer(content.data, content.size, fontIndex, fontSize, firstChar, lastChar, atlasWidth, atlasHeight);
+		content.Release();
+	}
+	return result;
 }
 
 static void ReleaseFont(Font *font) {
