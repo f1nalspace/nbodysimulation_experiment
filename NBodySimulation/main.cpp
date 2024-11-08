@@ -2,7 +2,7 @@
 -------------------------------------------------------------------------------------------------------------------
 Multi-Threaded N-Body 2D Smoothed Particle Hydrodynamics Fluid Simulation based on paper "Particle-based Viscoelastic Fluid Simulation" by Simon Clavet, Philippe Beaudoin, and Pierre Poulin.
 
-Version 1.4
+Version 1.4.4
 
 A experiment about creating a two-way particle simulation in 4 different programming styles to see the difference in performance and maintainability.
 The core math is same for all implementations, including rendering and threading.
@@ -37,6 +37,12 @@ Todo:
 - Migrate to modern opengl 3.3+
 
 Version History:
+
+1.4.4:
+- Migrated to FPL 0.9.9.0 beta
+- Migrated to Final Dynamic OpenGL 0.4.0.0 beta
+- Corrected function calls to FPL due to breaking changes
+- Fixed threading.h to support up to 128 threads
 
 1.4.3:
 - Migrated to FPL 0.9.2.0 beta
