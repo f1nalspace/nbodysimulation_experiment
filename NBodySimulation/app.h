@@ -16,16 +16,16 @@
 
 const int kWindowWidth = 1280;
 const int kWindowHeight = 720;
-const char *kAppVersion = "1.4.3";
+const char *kAppVersion = "1.4.4";
 
 #define VERY_SHORT_BENCHMARK 1
 
 #if !VERY_SHORT_BENCHMARK
-const size_t kBenchmarkFrameCount = 50;
-const size_t kBenchmarkIterationCount = 10;
+const size_t kBenchmarkFrameCount = 64;
+const size_t kBenchmarkIterationCount = 16;
 #else
-const size_t kBenchmarkFrameCount = 2;
-const size_t kBenchmarkIterationCount = 2;
+const size_t kBenchmarkFrameCount = 16;
+const size_t kBenchmarkIterationCount = 16;
 #endif
 const size_t kDemoCount = 4;
 
