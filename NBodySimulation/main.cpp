@@ -81,7 +81,7 @@ Version History:
 License:
 
 MIT License
-Copyright (c) 2017 Torsten Spaete
+Copyright (c) 2017-2024 Torsten Spaete
 -------------------------------------------------------------------------------------------------------------------
 */
 #define FPL_IMPLEMENTATION
