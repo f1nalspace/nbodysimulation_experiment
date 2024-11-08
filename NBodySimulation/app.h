@@ -18,7 +18,7 @@ const int kWindowWidth = 1280;
 const int kWindowHeight = 720;
 const char *kAppVersion = "1.4.4";
 
-#define VERY_SHORT_BENCHMARK 1
+#define VERY_SHORT_BENCHMARK 0
 
 #if !VERY_SHORT_BENCHMARK
 const size_t kBenchmarkFrameCount = 64;
