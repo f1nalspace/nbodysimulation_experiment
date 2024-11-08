@@ -11,7 +11,7 @@
 #include "utils.h"
 #include "font.h"
 
-double GetNiceNumber(double range, bool roundIt) {
+static inline double GetChartNumber(double range, bool roundIt) {
 	double exponent = floor(log10(range));
 	double fraction = range / pow(10.0, exponent);
 	double resultingFraction;
@@ -47,13 +47,13 @@ struct ChartAxis {
 	double max;
 
 	ChartAxis(double inputMin, double inputMax, double maxTicks) {
-		range = GetNiceNumber(inputMax - inputMin, false);
-		tickSpacing = GetNiceNumber(range / (maxTicks - 1.0), true);
+		range = GetChartNumber(inputMax - inputMin, false);
+		tickSpacing = GetChartNumber(range / (maxTicks - 1.0), true);
 		min = floor(inputMin / tickSpacing) * tickSpacing;
 		max = ceil(inputMax / tickSpacing) * tickSpacing;
 	}
 
-	float MapValueToPosition(const double value, const float maxPos) {
+	float MapValueToPosition(const double value, const float maxPos) const {
 		float factor = maxPos / (float)range;
 		float result = (float)value * factor;
 		return(result);
@@ -208,11 +208,13 @@ struct Chart {
 
 		// Sample labels
 		for (int sampleIndex = 0; sampleIndex < sampleCount; ++sampleIndex) {
-			const char *sampleLabel = sampleLabels[sampleIndex].c_str();
-			float textWidth = (float)GetTextWidth(sampleLabel, (uint32_t)strlen(sampleLabel), font, sampleLabelFontHeight);
+			const std::string &label = sampleLabels[sampleIndex];
+			const char *text = label.c_str();
+			size_t textLen = label.size();
+			float textWidth = GetTextWidth(text, (uint32_t)textLen, font, sampleLabelFontHeight);
 			float xLeft = chartOriginX + (float)sampleIndex * sampleWidth + sampleWidth * 0.5f - textWidth * 0.5f;
 			float yMiddle = chartOriginY - sampleLabelFontHeight - sampleAxisMargin;
-			Render::PushText(commandBuffer, Vec2f(xLeft, yMiddle), sampleLabel, font, fontTexture, sampleLabelFontHeight, Vec4f(1, 1, 1, 1));
+			Render::PushText(commandBuffer, Vec2f(xLeft, yMiddle), text, font, fontTexture, sampleLabelFontHeight, Vec4f(1, 1, 1, 1));
 		}
 
 		// Legend
